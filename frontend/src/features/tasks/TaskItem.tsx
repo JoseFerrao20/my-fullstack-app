@@ -1,0 +1,68 @@
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { useDeleteTask, useUpdateTask } from "@/features/tasks/hooks";
+import { PRIORITY_LABELS, PRIORITY_STYLES, STATUS_LABELS } from "@/features/tasks/schema";
+import { formatDueDate, isOverdue } from "@/lib/format";
+import type { Task } from "@/lib/types";
+
+export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) => void }) {
+  const update = useUpdateTask();
+  const remove = useDeleteTask();
+  const toast = useToast();
+  const done = task.status === "done";
+  const overdue = isOverdue(task);
+
+  const onError = (err: Error) => toast(err.message, "error");
+
+  return (
+    <li className="flex items-start gap-3 rounded-lg bg-white p-4 shadow-sm">
+      <input
+        type="checkbox"
+        checked={done}
+        aria-label={done ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
+        disabled={update.isPending}
+        onChange={() => update.mutate({ id: task.id, status: done ? "todo" : "done" }, { onError })}
+        className="mt-1 h-4 w-4 cursor-pointer rounded border-slate-300 text-indigo-600"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className={`font-medium ${done ? "text-slate-400 line-through" : "text-slate-900"}`}>{task.title}</h3>
+          <Badge className={PRIORITY_STYLES[task.priority]}>{PRIORITY_LABELS[task.priority]}</Badge>
+          {task.status === "in_progress" && (
+            <Badge className="bg-indigo-100 text-indigo-800">{STATUS_LABELS.in_progress}</Badge>
+          )}
+          {task.category && (
+            <Badge className="bg-slate-100 text-slate-700">
+              <span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: task.category.color }} />
+              {task.category.name}
+            </Badge>
+          )}
+        </div>
+        {task.description && <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{task.description}</p>}
+        {task.dueAt && (
+          <p className={`mt-1 text-xs ${overdue ? "font-semibold text-red-600" : "text-slate-500"}`}>
+            {overdue ? "Overdue · " : "Due "}
+            {formatDueDate(task.dueAt)}
+          </p>
+        )}
+      </div>
+      <div className="flex shrink-0 gap-1">
+        <Button variant="ghost" onClick={() => onEdit(task)} aria-label={`Edit "${task.title}"`}>
+          Edit
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-red-600 hover:bg-red-50"
+          aria-label={`Delete "${task.title}"`}
+          disabled={remove.isPending}
+          onClick={() => {
+            if (confirm(`Delete "${task.title}"?`)) remove.mutate(task.id, { onError });
+          }}
+        >
+          Delete
+        </Button>
+      </div>
+    </li>
+  );
+}
