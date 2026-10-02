@@ -157,6 +157,16 @@ export const pt: Translation = {
     moveDown: "Mover «{{title}}» para baixo",
     delete: "Apagar o passo «{{title}}»",
   },
+  quickAdd: {
+    label: "Adicionar tarefa rapidamente",
+    placeholder: "Adicionar tarefa… ex.: Pagar renda dia 1 todos os meses #casa !alta",
+    hint: "Enter para adicionar · Esc para limpar · entende datas, horas, “todas as semanas”, #categoria e !prioridade",
+    needsTitle: "Escreva o que é a tarefa, não só quando.",
+    newCategory: "#{{name}} (nova)",
+    details: "Mais detalhes…",
+    added: "Adicionada «{{title}}»",
+    understood: "Percebido",
+  },
   task: {
     status: { todo: "Por fazer", in_progress: "Em curso", done: "Concluída" },
     priority: { low: "Baixa", medium: "Média", high: "Alta", urgent: "Urgente" },

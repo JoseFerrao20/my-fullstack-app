@@ -155,6 +155,16 @@ export const en = {
     moveDown: "Move “{{title}}” down",
     delete: "Delete step “{{title}}”",
   },
+  quickAdd: {
+    label: "Quick add a task",
+    placeholder: "Add a task… e.g. Pay rent on the 1st every month #home !high",
+    hint: "Enter to add · Esc to clear · dates, times, “every week”, #category and !priority are understood",
+    needsTitle: "Type what the task is, not just when.",
+    newCategory: "#{{name}} (new)",
+    details: "More details…",
+    added: "Added “{{title}}”",
+    understood: "Understood",
+  },
   task: {
     status: { todo: "To do", in_progress: "In progress", done: "Done" },
     priority: { low: "Low", medium: "Medium", high: "High", urgent: "Urgent" },

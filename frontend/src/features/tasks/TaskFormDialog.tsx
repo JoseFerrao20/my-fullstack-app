@@ -31,10 +31,12 @@ interface Props {
   open: boolean;
   /** The task to edit, or null to create a new one. */
   task: Task | null;
+  /** Starting values for a new task. */
+  initialValues?: Partial<TaskFormValues>;
   onClose: () => void;
 }
 
-export function TaskFormDialog({ open, task, onClose }: Props) {
+export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const create = useCreateTask();
@@ -58,12 +60,12 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
 
   useEffect(() => {
     if (open) {
-      reset(task ? taskToForm(task) : emptyTaskForm);
+      reset(task ? taskToForm(task) : { ...emptyTaskForm, ...initialValues });
       setDraftSteps([]);
       create.reset();
       update.reset();
     }
-  }, [open, task, reset]);
+  }, [open, task, reset]); // initialValues is read when the dialog opens
 
   const recurrence = watch("recurrence");
   // Keep a non-preset value (e.g. set through the API) selectable.

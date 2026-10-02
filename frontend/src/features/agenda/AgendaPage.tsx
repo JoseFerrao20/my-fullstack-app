@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
+import { QuickAdd } from "@/features/quickadd/QuickAdd";
 import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
 import { TaskItem } from "@/features/tasks/TaskItem";
+import type { TaskFormValues } from "@/features/tasks/schema";
 import type { Task } from "@/lib/types";
 
 /** Shared page frame for Today / Upcoming: title, "+ New task" and the edit dialog. */
@@ -18,9 +20,11 @@ export function AgendaPage({
   const { t } = useTranslation();
   const [editing, setEditing] = useState<Task | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [initialValues, setInitialValues] = useState<Partial<TaskFormValues>>({});
 
-  const open = (task: Task | null) => {
+  const open = (task: Task | null, values: Partial<TaskFormValues> = {}) => {
     setEditing(task);
+    setInitialValues(values);
     setFormOpen(true);
   };
 
@@ -33,8 +37,9 @@ export function AgendaPage({
         </div>
         <Button onClick={() => open(null)}>{t("tasks.new")}</Button>
       </div>
+      <QuickAdd onOpenDetails={(values) => open(null, values)} />
       {children(open)}
-      <TaskFormDialog open={formOpen} task={editing} onClose={() => setFormOpen(false)} />
+      <TaskFormDialog open={formOpen} task={editing} initialValues={initialValues} onClose={() => setFormOpen(false)} />
     </div>
   );
 }

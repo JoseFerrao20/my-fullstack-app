@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { CategoriesManager } from "@/features/categories/CategoriesManager";
 import { TaskFilters } from "@/features/tasks/TaskFilters";
+import { QuickAdd } from "@/features/quickadd/QuickAdd";
 import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
 import { TaskItem } from "@/features/tasks/TaskItem";
 import { ViewToggle } from "@/features/tasks/ViewToggle";
 import { useTasks } from "@/features/tasks/hooks";
 import { useFilterParams } from "@/features/tasks/useFilterParams";
 import { useErrorMessage } from "@/lib/errors";
+import type { TaskFormValues } from "@/features/tasks/schema";
 import type { Task } from "@/lib/types";
 
 export function TasksPage() {
@@ -25,7 +27,9 @@ export function TasksPage() {
   const totalPages = meta ? Math.max(1, Math.ceil(meta.total / meta.pageSize)) : 1;
   const hasFilters = Boolean(filters.status || filters.priority || filters.categoryId || filters.q);
 
-  const openCreate = () => {
+  const [initialValues, setInitialValues] = useState<Partial<TaskFormValues>>({});
+  const openCreate = (values: Partial<TaskFormValues> = {}) => {
+    setInitialValues(values);
     setEditing(null);
     setFormOpen(true);
   };
@@ -42,8 +46,10 @@ export function TasksPage() {
             <h1 className="text-2xl font-bold text-slate-900">{t("tasks.title")}</h1>
             <ViewToggle filters={filters} />
           </div>
-          <Button onClick={openCreate}>{t("tasks.new")}</Button>
+          <Button onClick={() => openCreate()}>{t("tasks.new")}</Button>
         </div>
+
+        <QuickAdd onOpenDetails={openCreate} />
 
         <TaskFilters value={filters} onChange={setFilters} />
 
@@ -88,7 +94,7 @@ export function TasksPage() {
         <CategoriesManager />
       </aside>
 
-      <TaskFormDialog open={formOpen} task={editing} onClose={() => setFormOpen(false)} />
+      <TaskFormDialog open={formOpen} task={editing} initialValues={initialValues} onClose={() => setFormOpen(false)} />
     </div>
   );
 }
