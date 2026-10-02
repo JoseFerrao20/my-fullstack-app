@@ -85,7 +85,8 @@ class TaskListQuery(CamelModel):
     q: str | None = Field(default=None, max_length=200)
     sort: TaskSort = "-createdAt"
     page: int = Field(default=1, ge=1)
-    page_size: int = Field(default=20, ge=1, le=100)
+    # Up to 500 so a calendar month fits in one request.
+    page_size: int = Field(default=20, ge=1, le=500)
 
 
 class TaskOut(CamelModel):

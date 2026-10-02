@@ -3,6 +3,7 @@ import { Layout } from "@/app/Layout";
 import { SettingsPage } from "@/features/account/SettingsPage";
 import { TodayPage } from "@/features/agenda/TodayPage";
 import { UpcomingPage } from "@/features/agenda/UpcomingPage";
+import { CalendarPage } from "@/features/calendar/CalendarPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
@@ -28,6 +29,7 @@ export const routes = [
       { index: true, element: <Navigate to="/today" replace /> },
       { path: "today", element: <TodayPage /> },
       { path: "upcoming", element: <UpcomingPage /> },
+      { path: "calendar", element: <CalendarPage /> },
       { path: "tasks", element: <TasksPage /> },
       { path: "board", element: <BoardPage /> },
       { path: "settings", element: <SettingsPage /> },
