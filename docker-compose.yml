@@ -30,6 +30,8 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@taskmanager.local}
+      # Only for end-to-end test runs (see e2e/README.md); never in production.
+      DISABLE_RATE_LIMITS: ${DISABLE_RATE_LIMITS:-false}
     ports:
       - "8000:8000"
     depends_on:

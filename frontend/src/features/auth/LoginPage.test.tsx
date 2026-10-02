@@ -56,7 +56,7 @@ describe("LoginPage", () => {
     await u.type(screen.getByLabelText("Password"), "password123");
     await u.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Too many failed attempts. Try again in 10 minutes.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many attempts. Try again in 10 minutes.");
   });
 
   it("shows the server error on bad credentials", async () => {

@@ -118,6 +118,16 @@ def test_login_rate_limit(client):
     assert _login(client).status_code == 429
 
 
+def test_rate_limits_can_be_disabled_for_e2e_runs(client, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "disable_rate_limits", True)
+    signup(client)
+    for _ in range(8):
+        assert _login(client, password="wrong-password").status_code == 401
+    assert _login(client).status_code == 200
+
+
 def test_successful_login_resets_email_counter(client):
     signup(client)
     for _ in range(4):

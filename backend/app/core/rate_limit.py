@@ -10,6 +10,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import DateTime, String, delete, func, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
+from app.core.config import get_settings
 from app.core.db import Base
 from app.core.envelope import ApiError
 
@@ -30,6 +31,8 @@ class RateLimiter:
 
     def check(self, key: str, *, limit: int, window: timedelta, now: datetime | None = None) -> None:
         """Raise 429 if `key` already has `limit` events inside the window."""
+        if get_settings().disable_rate_limits:
+            return
         now = now or datetime.now(UTC)
         since = now - window
         count, oldest = self.db.execute(

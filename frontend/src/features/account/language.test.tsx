@@ -85,7 +85,7 @@ describe("Portuguese UI", () => {
       "Email ou password incorretos",
     );
     expect(errorMessage(new ApiError(429, "TOO_MANY_REQUESTS", "x", { retryAfter: 61 }), t)).toBe(
-      "Demasiadas tentativas falhadas. Tente novamente daqui a 2 minutos.",
+      "Demasiadas tentativas. Tente novamente daqui a 2 minutos.",
     );
     expect(errorMessage(new ApiError(418, "TEAPOT", "I'm a teapot"), t)).toBe("I'm a teapot");
     expect(errorMessage(new Error("boom"), t)).toBe("Algo correu mal");

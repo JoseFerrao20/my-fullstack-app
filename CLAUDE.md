@@ -26,13 +26,22 @@ Backend (run in `backend/`, after `pip install -e ".[dev]"`):
 - `alembic revision --autogenerate -m "message"` - New migration after model changes
 - `ruff check .` - Lint (config in `pyproject.toml`). Without local Python: `docker compose run --rm --no-deps backend ruff check .`
 
-CI (`.github/workflows/ci.yml`) runs on every PR and push to `main`: backend ruff + `alembic upgrade head && alembic check` on an empty DB + pytest; frontend lint, `tsc`, vitest, build; and the Docker image builds.
+CI (`.github/workflows/ci.yml`) runs on every PR and push to `main`: backend ruff + `alembic upgrade head && alembic check` on an empty DB + pytest; frontend lint, `tsc`, vitest, build; then Playwright end-to-end tests against the full Docker stack (which also builds the images).
+
+End-to-end (run in `e2e/`, see `e2e/README.md`): start the stack with `DISABLE_RATE_LIMITS=true docker compose up -d --build`, then `npm ci && npx playwright install chromium && npm test`. Each test signs up its own user. Pages loaded on demand (board, calendar, settings, trash, password pages) need an explicit wait for their heading after client-side navigation.
 
 Root:
 - `docker-compose up` - Full stack (app at http://localhost, API at :8000)
 - `docker-compose up -d db` - Just Postgres (also creates the `taskapp_test` database on first start)
 - Mailpit catches all outgoing email in development: inbox at http://localhost:8025
 - `docker compose run --rm backend python -m app.core.push` - Generate VAPID keys for browser push (put them in the gitignored root `.env`; without them push is simply off)
+
+## Production
+- `docker-compose.prod.yml` (project name `taskapp-prod`, settings in the gitignored `.env.production`, template `.env.production.example`): Caddy (`deploy/Caddyfile`, automatic HTTPS, security headers) is the only service with published ports; it proxies to the frontend's nginx, which forwards `/api` to the backend. `DOMAIN` can be `<ip-with-dashes>.sslip.io` until there's a real domain.
+- The backend Dockerfile has a `prod` target (no dev deps, non-root `app` user, healthcheck) and a `dev` target (last stage, used by `docker-compose.yml` and CI).
+- `ENVIRONMENT=production` makes the backend refuse to start with unsafe settings (`Settings.production_problems()` in `core/config.py`: dev/short JWT secret, non-secure cookies, non-https `APP_BASE_URL`, `DISABLE_RATE_LIMITS`, Mailpit/localhost SMTP). Add new production-only invariants there.
+- Backups: the `backup` service runs `deploy/backup.sh` daily at 03:15 UTC (pg_dump custom format, keeps 7 daily + 4 weekly in the `backups` volume); restore with `deploy/restore.sh` (stop the backend first). `.gitattributes` keeps `*.sh` LF so they run in Linux containers.
+- Deploying: `docs/deploy.md` (Portuguese, step by step for a VPS). On the server, `sh deploy/update.sh [commit]` checks out the commit, backs up, rebuilds, restarts and waits for a healthy backend. `.github/workflows/deploy.yml` runs it over SSH after CI passes on `main` (secrets in the GitHub `production` environment; it skips itself while `DEPLOY_HOST` isn't set).
 
 ## Architecture Decisions
 - REST API with OpenAPI spec
