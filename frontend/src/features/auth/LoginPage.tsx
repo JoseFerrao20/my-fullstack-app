@@ -15,6 +15,16 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+function loginErrorMessage(err: Error): string {
+  if (!(err instanceof ApiError)) return "Something went wrong";
+  if (err.code === "TOO_MANY_REQUESTS") {
+    const seconds = (err.details as { retryAfter?: number } | undefined)?.retryAfter ?? 60;
+    const minutes = Math.ceil(seconds / 60);
+    return `Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+  }
+  return err.message;
+}
+
 export function LoginPage() {
   const { data: user } = useMe();
   const login = useLogin();
@@ -34,8 +44,7 @@ export function LoginPage() {
     login.mutate(values, { onSuccess: () => navigate(from, { replace: true }) }),
   );
 
-  const serverError =
-    login.error instanceof ApiError ? login.error.message : login.error ? "Something went wrong" : null;
+  const serverError = login.error ? loginErrorMessage(login.error) : null;
 
   return (
     <AuthLayout

@@ -43,8 +43,15 @@ def ok(data: Any, meta: CamelModel | dict[str, Any] | None = None) -> Envelope:
 class ApiError(HTTPException):
     """HTTPException with a machine-readable error code."""
 
-    def __init__(self, status_code: int, code: str, message: str, details: Any = None):
-        super().__init__(status_code=status_code, detail=message)
+    def __init__(
+        self,
+        status_code: int,
+        code: str,
+        message: str,
+        details: Any = None,
+        headers: dict[str, str] | None = None,
+    ):
+        super().__init__(status_code=status_code, detail=message, headers=headers)
         self.code = code
         self.details = details
 
@@ -61,10 +68,11 @@ _DEFAULT_CODES = {
     405: "METHOD_NOT_ALLOWED",
     409: "CONFLICT",
     422: "VALIDATION_ERROR",
+    429: "TOO_MANY_REQUESTS",
 }
 
 
-def _error_response(status_code: int, code: str, message: str, details: Any = None) -> JSONResponse:
+def error_response(status_code: int, code: str, message: str, details: Any = None) -> JSONResponse:
     body = Envelope(error=ErrorBody(code=code, message=message, details=details))
     return JSONResponse(
         status_code=status_code,
@@ -76,7 +84,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(_: Request, exc: StarletteHTTPException) -> JSONResponse:
         code = getattr(exc, "code", None) or _DEFAULT_CODES.get(exc.status_code, "ERROR")
-        response = _error_response(
+        response = error_response(
             exc.status_code, code, str(exc.detail), getattr(exc, "details", None)
         )
         if exc.headers:
@@ -89,9 +97,9 @@ def register_exception_handlers(app: FastAPI) -> None:
             {"field": ".".join(str(p) for p in err["loc"][1:]), "message": err["msg"]}
             for err in exc.errors()
         ]
-        return _error_response(422, "VALIDATION_ERROR", "Request validation failed", details)
+        return error_response(422, "VALIDATION_ERROR", "Request validation failed", details)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled error", exc_info=exc)
-        return _error_response(500, "INTERNAL_ERROR", "Internal server error")
+        return error_response(500, "INTERNAL_ERROR", "Internal server error")

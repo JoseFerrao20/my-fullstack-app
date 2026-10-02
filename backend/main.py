@@ -6,10 +6,10 @@ from fastapi import APIRouter, FastAPI
 from app import models  # noqa: F401  (register all models on Base.metadata)
 from app.core.config import get_settings
 from app.core.envelope import register_exception_handlers
+from app.core.scheduler import create_scheduler
 from app.features.auth.router import router as auth_router
 from app.features.categories.router import router as categories_router
 from app.features.notifications.router import router as notifications_router
-from app.features.notifications.scheduler import create_scheduler
 from app.features.tasks.router import router as tasks_router
 
 logging.basicConfig(level=logging.INFO)

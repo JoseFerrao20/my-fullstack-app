@@ -1,9 +1,7 @@
-"""Background job that turns task due dates into in-app notifications."""
+"""Job that turns task due dates into in-app notifications (scheduled in app/core/scheduler.py)."""
 
 import logging
 from datetime import UTC, datetime, timedelta
-
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.core.config import get_settings
 from app.core.db import SessionLocal
@@ -22,16 +20,3 @@ def run_due_notifications_job(now: datetime | None = None) -> int:
         logger.info("Created %d due-date notifications", created)
     return created
 
-
-def create_scheduler() -> BackgroundScheduler:
-    scheduler = BackgroundScheduler(timezone="UTC")
-    scheduler.add_job(
-        run_due_notifications_job,
-        "interval",
-        seconds=get_settings().notification_interval_seconds,
-        id="due_notifications",
-        max_instances=1,
-        coalesce=True,
-        next_run_time=datetime.now(UTC),
-    )
-    return scheduler

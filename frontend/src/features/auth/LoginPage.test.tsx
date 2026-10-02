@@ -44,6 +44,21 @@ describe("LoginPage", () => {
     expect(body).toEqual({ email: "alice@example.com", password: "password123" });
   });
 
+  it("says how long to wait when rate limited", async () => {
+    server.use(
+      http.post(apiUrl("/auth/login"), () =>
+        fail(429, "TOO_MANY_REQUESTS", "Too many attempts. Try again later.", { retryAfter: 600 }),
+      ),
+    );
+    const { user: u } = renderLogin();
+
+    await u.type(await screen.findByLabelText("Email"), "alice@example.com");
+    await u.type(screen.getByLabelText("Password"), "password123");
+    await u.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many failed attempts. Try again in 10 minutes.");
+  });
+
   it("shows the server error on bad credentials", async () => {
     server.use(
       http.post(apiUrl("/auth/login"), () => fail(401, "INVALID_CREDENTIALS", "Invalid email or password")),
