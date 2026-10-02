@@ -93,6 +93,23 @@ export const pt: Translation = {
     confirmDelete: "Apagar a sua conta e todos os dados? Não é possível desfazer.",
     deleting: "A apagar…",
   },
+  agenda: {
+    today: "Hoje",
+    upcoming: "Próximos 7 dias",
+    overdue: "Em atraso",
+    dueToday: "Para hoje",
+    tomorrow: "Amanhã",
+    todayEmpty: "Nada para hoje 🎉",
+    upcomingEmpty: "Nada nos próximos 7 dias.",
+  },
+  nav: {
+    label: "Principal",
+    today: "Hoje",
+    upcoming: "Próximos",
+    all: "Todas",
+    todayCount_one: "{{count}} tarefa para hoje ou em atraso",
+    todayCount_other: "{{count}} tarefas para hoje ou em atraso",
+  },
   task: {
     status: { todo: "Por fazer", in_progress: "Em curso", done: "Concluída" },
     priority: { low: "Baixa", medium: "Média", high: "Alta", urgent: "Urgente" },

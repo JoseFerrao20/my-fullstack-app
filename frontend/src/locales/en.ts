@@ -91,6 +91,23 @@ export const en = {
     confirmDelete: "Delete your account and all your data? This can't be undone.",
     deleting: "Deleting…",
   },
+  agenda: {
+    today: "Today",
+    upcoming: "Next 7 days",
+    overdue: "Overdue",
+    dueToday: "Due today",
+    tomorrow: "Tomorrow",
+    todayEmpty: "Nothing due today 🎉",
+    upcomingEmpty: "Nothing due in the next 7 days.",
+  },
+  nav: {
+    label: "Main",
+    today: "Today",
+    upcoming: "Upcoming",
+    all: "All tasks",
+    todayCount_one: "{{count}} task due today or overdue",
+    todayCount_other: "{{count}} tasks due today or overdue",
+  },
   task: {
     status: { todo: "To do", in_progress: "In progress", done: "Done" },
     priority: { low: "Low", medium: "Medium", high: "High", urgent: "Urgent" },

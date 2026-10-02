@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Layout } from "@/app/Layout";
 import { SettingsPage } from "@/features/account/SettingsPage";
+import { TodayPage } from "@/features/agenda/TodayPage";
+import { UpcomingPage } from "@/features/agenda/UpcomingPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
@@ -22,7 +24,11 @@ export const routes = [
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <TasksPage /> },
+      // "Today" is home; the full filterable list lives at /tasks.
+      { index: true, element: <Navigate to="/today" replace /> },
+      { path: "today", element: <TodayPage /> },
+      { path: "upcoming", element: <UpcomingPage /> },
+      { path: "tasks", element: <TasksPage /> },
       { path: "board", element: <BoardPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],

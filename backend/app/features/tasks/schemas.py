@@ -72,6 +72,8 @@ class TaskUpdate(CamelModel):
 
 class TaskListQuery(CamelModel):
     status: TaskStatus | None = None
+    # Only tasks that still need doing (status != done); used by the Today / Upcoming views.
+    exclude_done: bool = False
     priority: TaskPriority | None = None
     category_id: int | None = None
     due_before: AwareDatetime | None = None

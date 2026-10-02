@@ -14,7 +14,7 @@ export function ViewToggle({ filters }: { filters: TaskFilters }) {
 
   return (
     <nav aria-label={t("tasks.view")} className="flex rounded-lg bg-slate-200 p-0.5">
-      <NavLink to={`/${search}`} end className={linkClass}>
+      <NavLink to={`/tasks${search}`} className={linkClass}>
         {t("tasks.list")}
       </NavLink>
       <NavLink to={`/board${search}`} className={linkClass}>

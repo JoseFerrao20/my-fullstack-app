@@ -5,6 +5,11 @@ export type TaskSort = "createdAt" | "-createdAt" | "dueAt" | "-dueAt" | "priori
 
 export interface TaskFilters {
   status?: TaskStatus;
+  /** Only tasks that still need doing. */
+  excludeDone?: boolean;
+  /** ISO instants; dueAfter is inclusive, dueBefore exclusive. */
+  dueAfter?: string;
+  dueBefore?: string;
   priority?: TaskPriority;
   categoryId?: number;
   q?: string;

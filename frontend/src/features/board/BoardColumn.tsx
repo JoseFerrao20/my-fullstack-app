@@ -64,7 +64,7 @@ export function BoardColumn({ column, shared, onOpen, onMove }: Props) {
 
       {hidden > 0 && (
         <Link
-          to={`/${filtersToSearch({ ...shared, status: column.status, sort: column.sort })}`}
+          to={`/tasks${filtersToSearch({ ...shared, status: column.status, sort: column.sort })}`}
           className="mt-3 px-1 text-sm font-medium text-indigo-600 hover:underline"
         >
           {t("board.more", { count: hidden })}

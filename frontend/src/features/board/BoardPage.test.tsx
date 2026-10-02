@@ -115,6 +115,6 @@ describe("BoardPage", () => {
     renderWithProviders(<BoardPage />, { path: "/board" });
 
     const link = await screen.findByRole("link", { name: "+5 more in the list" });
-    expect(link).toHaveAttribute("href", "/?status=done&sort=-completedAt");
+    expect(link).toHaveAttribute("href", "/tasks?status=done&sort=-completedAt");
   });
 });

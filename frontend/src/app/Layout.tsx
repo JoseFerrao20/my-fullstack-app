@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { MainNav } from "@/app/MainNav";
 import { Button } from "@/components/ui/Button";
 import { LanguageSwitcher } from "@/features/account/LanguageSwitcher";
 import { useProfileLanguage } from "@/features/account/useProfileLanguage";
@@ -16,10 +17,13 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/" className="text-lg font-bold text-indigo-600">
-            {t("app.name")}
-          </Link>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link to="/" className="text-lg font-bold text-indigo-600">
+              {t("app.name")}
+            </Link>
+            <MainNav />
+          </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
             <Link

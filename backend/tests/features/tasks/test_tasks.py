@@ -124,3 +124,23 @@ def test_requires_auth(client):
     res = client.get("/api/tasks")
     assert res.status_code == 401
     assert res.json()["error"]["code"] == "UNAUTHORIZED"
+
+
+def test_exclude_done_with_due_range(auth_client):
+    now = datetime.now(UTC)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    for title, due, status in [
+        ("Late", start - timedelta(hours=2), "todo"),
+        ("Today open", start + timedelta(hours=10), "in_progress"),
+        ("Today done", start + timedelta(hours=11), "done"),
+        ("Tomorrow", start + timedelta(days=1, hours=9), "todo"),
+    ]:
+        auth_client.post("/api/tasks", json={"title": title, "dueAt": _iso(due), "status": status})
+
+    def titles(**params):
+        data = auth_client.get("/api/tasks", params={"excludeDone": True, "sort": "dueAt", **params}).json()["data"]
+        return [t["title"] for t in data]
+
+    assert titles(dueBefore=_iso(start)) == ["Late"]
+    assert titles(dueAfter=_iso(start), dueBefore=_iso(start + timedelta(days=1))) == ["Today open"]
+    assert titles() == ["Late", "Today open", "Tomorrow"]

@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.features.tasks.models import Task
+from app.features.tasks.models import Task, TaskStatus
 from app.features.tasks.schemas import TaskListQuery
 
 _SORT_COLUMNS = {
@@ -23,6 +23,8 @@ class TaskRepository:
         stmt = select(Task).where(Task.user_id == user_id)
         if query.status:
             stmt = stmt.where(Task.status == query.status)
+        if query.exclude_done:
+            stmt = stmt.where(Task.status != TaskStatus.DONE)
         if query.priority:
             stmt = stmt.where(Task.priority == query.priority)
         if query.category_id is not None:
