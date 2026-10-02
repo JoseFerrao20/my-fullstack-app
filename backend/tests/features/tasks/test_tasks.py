@@ -86,6 +86,7 @@ def test_list_filters_sort_and_pagination(auth_client):
     titles = {t["title"] for t in auth_client.get("/api/tasks", params={"dueBefore": before}).json()["data"]}
     assert titles == {"Bravo", "Delta report"}
 
+    assert auth_client.get("/api/tasks", params={"pageSize": 500}).status_code == 200  # a calendar month
     assert auth_client.get("/api/tasks", params={"pageSize": 1000}).status_code == 422
     assert auth_client.get("/api/tasks", params={"sort": "nope"}).status_code == 422
 

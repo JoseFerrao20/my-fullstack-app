@@ -10,12 +10,15 @@ from app.core.db import SessionLocal
 from app.core.rate_limit import RateLimiter
 from app.features.auth.repository import PasswordResetRepository, SessionRepository
 from app.features.notifications.scheduler import run_due_notifications_job
+from app.features.reminders.jobs import run_digest_job, run_reminders_job
+from app.features.tasks.repository import TaskRepository
 
 logger = logging.getLogger(__name__)
 
 # Revoked sessions are kept a week for troubleshooting before they're deleted.
 KEEP_REVOKED_SESSIONS = timedelta(days=7)
 KEEP_RATE_LIMIT_EVENTS = timedelta(days=1)
+TRASH_RETENTION = timedelta(days=30)
 
 
 def run_cleanup_job(now: datetime | None = None) -> None:
@@ -24,8 +27,10 @@ def run_cleanup_job(now: datetime | None = None) -> None:
         sessions = SessionRepository(db).delete_stale(now, KEEP_REVOKED_SESSIONS)
         events = RateLimiter(db).delete_older_than(now - KEEP_RATE_LIMIT_EVENTS)
         resets = PasswordResetRepository(db).delete_stale(now)
+        trashed = TaskRepository(db).purge_trashed_before(now - TRASH_RETENTION)
     logger.info(
-        "Cleanup: deleted %d sessions, %d rate-limit events, %d reset tokens", sessions, events, resets
+        "Cleanup: deleted %d sessions, %d rate-limit events, %d reset tokens, %d trashed tasks",
+        sessions, events, resets, trashed,
     )
 
 
@@ -40,6 +45,12 @@ def create_scheduler() -> BackgroundScheduler:
         coalesce=True,
         next_run_time=datetime.now(UTC),
     )
+    scheduler.add_job(
+        run_reminders_job, "interval", minutes=1, id="reminders", max_instances=1, coalesce=True,
+        next_run_time=datetime.now(UTC),
+    )
+    # Every 5 minutes is plenty to land inside each user's chosen digest hour.
+    scheduler.add_job(run_digest_job, "interval", minutes=5, id="daily_digest", max_instances=1, coalesce=True)
     scheduler.add_job(
         run_cleanup_job,
         "interval",

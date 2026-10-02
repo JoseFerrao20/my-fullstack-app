@@ -3,7 +3,7 @@
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
-export type NotificationType = "due_soon" | "overdue";
+export type NotificationType = "due_soon" | "overdue" | "reminder";
 export type TaskRecurrence = "daily" | "weekly" | "monthly";
 
 export interface User {
@@ -22,6 +22,13 @@ export interface Category {
   createdAt: string;
 }
 
+export interface Subtask {
+  id: number;
+  title: string;
+  done: boolean;
+  position: number;
+}
+
 export interface Task {
   id: number;
   title: string;
@@ -36,6 +43,14 @@ export interface Task {
   recurrenceInterval: number;
   recurrenceTimezone: string | null;
   nextOccurrenceId: number | null;
+  /** Minutes before dueAt to remind (0 = at the due time), or null for none. */
+  remindBeforeMinutes: number | null;
+  /** The checklist, in order. */
+  subtasks: Subtask[];
+  /** Tag names, A–Z. */
+  tags: string[];
+  /** Set while the task is in the trash. */
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

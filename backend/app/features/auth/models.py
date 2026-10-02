@@ -15,6 +15,9 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     # UI and email language ("pt" | "en"); NULL means "follow the browser".
     locale: Mapped[str | None] = mapped_column(String(5))
+    # Private iCal feed (see features/calendar_feed): SHA-256 of the URL's secret token.
+    calendar_feed_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    calendar_feed_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

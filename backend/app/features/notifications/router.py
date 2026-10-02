@@ -24,7 +24,7 @@ def list_notifications(
     query: Annotated[NotificationListQuery, Query()], db: DbSession, user: CurrentUser
 ):
     """List notifications, newest first. meta.unreadCount is always the full unread total."""
-    items, unread_count = _service(db, user).list(query)
+    items, unread_count = _service(db, user).list_notifications(query)
     return ok(
         [NotificationOut.model_validate(n) for n in items],
         NotificationListMeta(unread_count=unread_count),

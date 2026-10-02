@@ -15,7 +15,7 @@ def _service(db: DbSession, user: CurrentUser) -> CategoryService:
 
 @router.get("", response_model=Envelope[list[CategoryOut]])
 def list_categories(db: DbSession, user: CurrentUser):
-    categories = _service(db, user).list()
+    categories = _service(db, user).list_categories()
     return ok([CategoryOut.model_validate(c) for c in categories])
 
 

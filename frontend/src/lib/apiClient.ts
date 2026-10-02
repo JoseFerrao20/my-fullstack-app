@@ -32,7 +32,7 @@ export interface ApiResult<T, M = Record<string, unknown> | null> {
 type Query = Record<string, string | number | boolean | null | undefined>;
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   query?: Query;
   /** Skip the refresh-and-retry dance (used by auth endpoints themselves). */
@@ -115,6 +115,7 @@ export const api = {
     request<T, M>(path, { query }),
   post: <T>(path: string, body?: unknown, opts?: Pick<RequestOptions, "skipRefresh">) =>
     request<T>(path, { method: "POST", body, ...opts }),
+  put: <T>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body }),
   patch: <T, M = Record<string, unknown> | null>(path: string, body?: unknown) =>
     request<T, M>(path, { method: "PATCH", body }),
   delete: <T = null>(path: string, body?: unknown) => request<T>(path, { method: "DELETE", body }),

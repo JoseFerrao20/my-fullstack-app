@@ -8,12 +8,16 @@ from app.features.notifications.models import Notification, NotificationType
 from app.features.tasks.models import Task, TaskStatus
 
 
+def _task_not_trashed():
+    return select(Task.id).where(Task.id == Notification.task_id, Task.deleted_at.is_(None)).exists()
+
+
 class NotificationRepository:
     def __init__(self, db: Session):
         self.db = db
 
     def list_for_user(self, user_id: int, *, unread_only: bool, limit: int) -> list[Notification]:
-        stmt = select(Notification).where(Notification.user_id == user_id)
+        stmt = select(Notification).where(Notification.user_id == user_id, _task_not_trashed())
         if unread_only:
             stmt = stmt.where(Notification.read_at.is_(None))
         stmt = stmt.order_by(Notification.created_at.desc(), Notification.id.desc()).limit(limit)
@@ -21,7 +25,7 @@ class NotificationRepository:
 
     def unread_count(self, user_id: int) -> int:
         stmt = select(func.count()).where(
-            Notification.user_id == user_id, Notification.read_at.is_(None)
+            Notification.user_id == user_id, Notification.read_at.is_(None), _task_not_trashed()
         )
         return self.db.scalar(stmt) or 0
 
@@ -48,13 +52,16 @@ class NotificationRepository:
         self.db.commit()
         return result.rowcount
 
-    def delete_for_task(self, task_id: int) -> None:
-        """Remove a task's notifications (no commit; caller owns the transaction)."""
-        self.db.execute(delete(Notification).where(Notification.task_id == task_id))
+    def delete_for_task(self, task_id: int, types: list[NotificationType] | None = None) -> None:
+        """Remove a task's notifications, optionally only some types (no commit; caller owns the transaction)."""
+        stmt = delete(Notification).where(Notification.task_id == task_id)
+        if types is not None:
+            stmt = stmt.where(Notification.type.in_(types))
+        self.db.execute(stmt)
 
     def generate_due_notifications(self, now: datetime, due_soon_window: timedelta) -> int:
         """Insert due_soon/overdue notifications for open tasks. Safe to run repeatedly."""
-        open_task = Task.status != TaskStatus.DONE
+        open_task = (Task.status != TaskStatus.DONE) & Task.deleted_at.is_(None)
         inserted = 0
         for ntype, condition, prefix in (
             (

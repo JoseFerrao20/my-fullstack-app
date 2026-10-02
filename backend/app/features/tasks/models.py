@@ -1,11 +1,16 @@
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base, TimestampMixin
 from app.features.categories.models import Category
+
+if TYPE_CHECKING:
+    from app.features.subtasks.models import Subtask
+    from app.features.tags.models import Tag
 
 
 class TaskStatus(enum.StrEnum):
@@ -67,5 +72,14 @@ class Task(TimestampMixin, Base):
     next_occurrence_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="SET NULL")
     )
+    # "Remind me N minutes before the due date" (0 = at the due time). Requires due_at.
+    remind_before_minutes: Mapped[int | None] = mapped_column(Integer)
+    # Set when moved to the trash; trashed tasks are invisible everywhere except /trash.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     category: Mapped[Category | None] = relationship(lazy="joined")
+    # The checklist, always loaded with the task (one extra IN query per page of tasks).
+    subtasks: Mapped[list["Subtask"]] = relationship(
+        lazy="selectin", order_by="Subtask.position", cascade="all, delete-orphan", passive_deletes=True
+    )
+    tags: Mapped[list["Tag"]] = relationship(secondary="task_tags", lazy="selectin")

@@ -1,8 +1,11 @@
 from typing import Any
 
-from sqlalchemy import func, or_, select
+from datetime import datetime
+
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.features.tags.models import Tag
 from app.features.tasks.models import Task, TaskStatus
 from app.features.tasks.schemas import TaskListQuery
 
@@ -20,7 +23,9 @@ class TaskRepository:
         self.db = db
 
     def list_for_user(self, user_id: int, query: TaskListQuery) -> tuple[list[Task], int]:
-        stmt = select(Task).where(Task.user_id == user_id)
+        stmt = select(Task).where(Task.user_id == user_id, Task.deleted_at.is_(None))
+        if query.tag:
+            stmt = stmt.where(Task.tags.any(func.lower(Tag.name) == query.tag.strip().lstrip("@#").lower()))
         if query.status:
             stmt = stmt.where(Task.status == query.status)
         if query.exclude_done:
@@ -51,7 +56,36 @@ class TaskRepository:
         return list(self.db.scalars(stmt).unique()), total
 
     def get_for_user(self, user_id: int, task_id: int) -> Task | None:
-        return self.db.scalar(select(Task).where(Task.id == task_id, Task.user_id == user_id))
+        return self.db.scalar(
+            select(Task).where(Task.id == task_id, Task.user_id == user_id, Task.deleted_at.is_(None))
+        )
+
+    # --- trash ---
+
+    def get_trashed(self, user_id: int, task_id: int) -> Task | None:
+        return self.db.scalar(
+            select(Task).where(Task.id == task_id, Task.user_id == user_id, Task.deleted_at.is_not(None))
+        )
+
+    def list_trashed(self, user_id: int) -> list[Task]:
+        return list(
+            self.db.scalars(
+                select(Task)
+                .where(Task.user_id == user_id, Task.deleted_at.is_not(None))
+                .order_by(Task.deleted_at.desc(), Task.id.desc())
+            ).unique()
+        )
+
+    def empty_trash(self, user_id: int) -> int:
+        result = self.db.execute(delete(Task).where(Task.user_id == user_id, Task.deleted_at.is_not(None)))
+        self.db.commit()
+        self.db.expire_all()
+        return result.rowcount
+
+    def purge_trashed_before(self, cutoff: datetime) -> int:
+        result = self.db.execute(delete(Task).where(Task.deleted_at.is_not(None), Task.deleted_at < cutoff))
+        self.db.commit()
+        return result.rowcount
 
     def create(self, user_id: int, **fields: Any) -> Task:
         task = Task(user_id=user_id, **fields)

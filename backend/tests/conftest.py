@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.email import Email, get_email_sender
+from app.core.push import PushMessage, PushTarget, get_push_sender
 from app.models import Base
 from main import app
 
@@ -59,10 +60,30 @@ def outbox() -> Outbox:
     return Outbox()
 
 
+class Pushbox:
+    """Records push messages instead of sending them. Endpoints in `gone` act unsubscribed."""
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[PushTarget, PushMessage]] = []
+        self.gone: set[str] = set()
+
+    def send(self, target: PushTarget, message: PushMessage) -> bool:
+        if target.endpoint in self.gone:
+            return False
+        self.sent.append((target, message))
+        return True
+
+
 @pytest.fixture
-def client(db: Session, outbox: Outbox) -> Iterator[TestClient]:
+def pushbox() -> Pushbox:
+    return Pushbox()
+
+
+@pytest.fixture
+def client(db: Session, outbox: Outbox, pushbox: Pushbox) -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = lambda: db
     app.dependency_overrides[get_email_sender] = lambda: outbox
+    app.dependency_overrides[get_push_sender] = lambda: pushbox
     yield TestClient(app)
     app.dependency_overrides.clear()
 

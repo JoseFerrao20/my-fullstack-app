@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 class NotificationType(enum.StrEnum):
     DUE_SOON = "due_soon"
     OVERDUE = "overdue"
+    # The user's own "remind me N minutes before" (see features/reminders).
+    REMINDER = "reminder"
 
 
 class Notification(Base):

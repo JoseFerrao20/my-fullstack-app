@@ -9,7 +9,7 @@ class CategoryService:
         self.repo = repo
         self.user_id = user_id
 
-    def list(self) -> list[Category]:
+    def list_categories(self) -> list[Category]:
         return self.repo.list_for_user(self.user_id)
 
     def get(self, category_id: int) -> Category:

@@ -30,6 +30,9 @@ export function MainNav() {
       <NavLink to="/upcoming" className={({ isActive }) => linkClass(isActive)}>
         {t("nav.upcoming")}
       </NavLink>
+      <NavLink to="/calendar" className={({ isActive }) => linkClass(isActive)}>
+        {t("nav.calendar")}
+      </NavLink>
       <Link to="/tasks" className={linkClass(inAllTasks)} aria-current={inAllTasks ? "page" : undefined}>
         {t("nav.all")}
       </Link>

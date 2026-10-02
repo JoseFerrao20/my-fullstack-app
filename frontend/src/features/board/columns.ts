@@ -15,7 +15,7 @@ export const BOARD_COLUMNS: BoardColumnConfig[] = [
 ];
 
 /** Filters shared between the list and the board (status and sort are per column). */
-export type SharedFilters = Pick<TaskFilters, "priority" | "categoryId" | "q">;
+export type SharedFilters = Pick<TaskFilters, "priority" | "categoryId" | "tag" | "q">;
 
 export function columnFilters(shared: SharedFilters, column: BoardColumnConfig): TaskFilters {
   return { ...shared, status: column.status, sort: column.sort, page: 1, pageSize: column.limit };
