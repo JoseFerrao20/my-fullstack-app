@@ -10,4 +10,17 @@ from app.features.subtasks.models import Subtask
 from app.features.tags.models import Tag
 from app.features.tasks.models import Task
 
-__all__ = ["AuthSession", "Base", "PasswordResetToken", "Category", "Notification", "NotificationPreferences", "PushSubscription", "RateLimitEvent", "Subtask", "Tag", "Task", "User"]
+__all__ = [
+    "AuthSession",
+    "Base",
+    "Category",
+    "Notification",
+    "NotificationPreferences",
+    "PasswordResetToken",
+    "PushSubscription",
+    "RateLimitEvent",
+    "Subtask",
+    "Tag",
+    "Task",
+    "User",
+]

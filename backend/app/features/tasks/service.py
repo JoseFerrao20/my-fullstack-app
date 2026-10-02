@@ -143,8 +143,10 @@ class TaskService:
             fields["recurrence_anchor_at"] = due_at
 
     def _check_reminder(self, fields: dict[str, Any], current: Task | None) -> None:
-        remind = fields["remind_before_minutes"] if "remind_before_minutes" in fields else getattr(current, "remind_before_minutes", None)
-        due_at = fields["due_at"] if "due_at" in fields else getattr(current, "due_at", None)
+        def value(name: str) -> Any:
+            return fields[name] if name in fields else getattr(current, name, None)
+
+        remind, due_at = value("remind_before_minutes"), value("due_at")
         if remind is not None and due_at is None:
             raise _validation_error("dueAt", "A due date is required for reminders")
 

@@ -42,7 +42,9 @@ def push_config(_: CurrentUser):
 
 
 @router.post("/push/subscriptions", response_model=Envelope[None])
-def subscribe(payload: PushSubscriptionIn, user: CurrentUser, db: DbSession, user_agent: Annotated[str | None, Header()] = None):
+def subscribe(
+    payload: PushSubscriptionIn, user: CurrentUser, db: DbSession, user_agent: Annotated[str | None, Header()] = None
+):
     """Register this browser for push notifications (idempotent)."""
     if not get_settings().push_enabled:
         raise ApiError(409, "PUSH_DISABLED", "Push notifications are not configured on this server")
@@ -65,5 +67,6 @@ def unsubscribe(payload: PushUnsubscribeIn, user: CurrentUser, db: DbSession):
 @router.post("/push/test", response_model=Envelope[None])
 def send_test_push(user: CurrentUser, db: DbSession, sender: Pusher):
     """Send a test notification to all of the user's devices."""
-    delivered = PushService(PushSubscriptionRepository(db), sender).send_to_user(user.id, push_test_message(user.locale))
+    service = PushService(PushSubscriptionRepository(db), sender)
+    delivered = service.send_to_user(user.id, push_test_message(user.locale))
     return ok(None, {"delivered": delivered})

@@ -4,13 +4,17 @@
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
-self.addEventListener("push", (event) => {
-  let data = {};
+function readPayload(event) {
+  if (!event.data) return {};
   try {
-    data = event.data ? event.data.json() : {};
+    return event.data.json();
   } catch {
-    data = { title: event.data ? event.data.text() : "" };
+    return { title: event.data.text() };
   }
+}
+
+self.addEventListener("push", (event) => {
+  const data = readPayload(event);
   const title = data.title || "Task Manager";
   event.waitUntil(
     self.registration.showNotification(title, {
