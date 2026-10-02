@@ -23,7 +23,8 @@ export function LoginPage() {
   const login = useLogin();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const state = location.state as { from?: string; notice?: "passwordChanged" } | null;
+  const from = state?.from ?? "/";
 
   const {
     register,
@@ -50,6 +51,11 @@ export function LoginPage() {
       }
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4">
+        {state?.notice === "passwordChanged" && !login.error && (
+          <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
+            {t("auth.passwordChangedNotice")}
+          </p>
+        )}
         {login.error && (
           <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
             {errorMessage(login.error)}
@@ -69,6 +75,11 @@ export function LoginPage() {
           error={errors.password?.message}
           {...register("password")}
         />
+        <p className="-mt-2 text-right text-sm">
+          <Link to="/forgot-password" className="text-indigo-600 hover:underline">
+            {t("auth.forgotLink")}
+          </Link>
+        </p>
         <Button type="submit" className="w-full" disabled={login.isPending}>
           {login.isPending ? t("auth.loggingIn") : t("auth.logIn")}
         </Button>

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import Session
 
-from app.features.auth.models import AuthSession, User
+from app.features.auth.models import AuthSession, PasswordResetToken, User
 
 
 class UserRepository:
@@ -29,6 +29,12 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def delete(self, user: User) -> None:
+        # Core DELETE so the database's ON DELETE CASCADE removes everything the user owns.
+        self.db.execute(delete(User).where(User.id == user.id))
+        self.db.commit()
+        self.db.expunge_all()
 
 
 class SessionRepository:
@@ -100,6 +106,43 @@ class SessionRepository:
                     AuthSession.expires_at <= now,
                     AuthSession.revoked_at <= now - keep_revoked_for,
                 )
+            )
+        )
+        self.db.commit()
+        return result.rowcount
+
+
+class PasswordResetRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create(self, *, user_id: int, token_hash: str, expires_at: datetime, now: datetime) -> None:
+        # Only the newest link works: retire any earlier unused ones.
+        self.db.execute(
+            update(PasswordResetToken)
+            .where(PasswordResetToken.user_id == user_id, PasswordResetToken.used_at.is_(None))
+            .values(used_at=now)
+        )
+        self.db.add(PasswordResetToken(user_id=user_id, token_hash=token_hash, expires_at=expires_at))
+        self.db.commit()
+
+    def get_usable(self, token_hash: str, now: datetime) -> PasswordResetToken | None:
+        return self.db.scalar(
+            select(PasswordResetToken).where(
+                PasswordResetToken.token_hash == token_hash,
+                PasswordResetToken.used_at.is_(None),
+                PasswordResetToken.expires_at > now,
+            )
+        )
+
+    def mark_used(self, token: PasswordResetToken, now: datetime) -> None:
+        token.used_at = now
+        self.db.commit()
+
+    def delete_stale(self, now: datetime) -> int:
+        result = self.db.execute(
+            delete(PasswordResetToken).where(
+                or_(PasswordResetToken.used_at.is_not(None), PasswordResetToken.expires_at <= now)
             )
         )
         self.db.commit()

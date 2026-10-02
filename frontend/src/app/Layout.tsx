@@ -22,7 +22,15 @@ export function Layout() {
           </Link>
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <span className="hidden text-sm text-slate-600 sm:inline">{user?.name}</span>
+            <Link
+              to="/settings"
+              title={t("settings.link")}
+              className="hidden items-center gap-1 rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
+            >
+              <span aria-hidden="true">⚙</span>
+              {user?.name}
+              <span className="sr-only">· {t("settings.link")}</span>
+            </Link>
             <LanguageSwitcher />
             <Button
               variant="secondary"

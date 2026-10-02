@@ -59,3 +59,28 @@ class UserOut(CamelModel):
     name: str
     locale: Locale | None
     created_at: datetime
+
+
+class PasswordResetRequestIn(CamelModel):
+    email: EmailStr
+    # Language for the email when the account has none saved (it follows the browser).
+    locale: Locale | None = None
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.lower()
+
+
+class PasswordResetConfirmIn(CamelModel):
+    token: str = Field(min_length=1, max_length=200)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordChangeIn(CamelModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class AccountDeleteIn(CamelModel):
+    password: str = Field(min_length=1, max_length=128)

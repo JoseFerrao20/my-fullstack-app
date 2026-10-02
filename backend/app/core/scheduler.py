@@ -8,7 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.rate_limit import RateLimiter
-from app.features.auth.repository import SessionRepository
+from app.features.auth.repository import PasswordResetRepository, SessionRepository
 from app.features.notifications.scheduler import run_due_notifications_job
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,10 @@ def run_cleanup_job(now: datetime | None = None) -> None:
     with SessionLocal() as db:
         sessions = SessionRepository(db).delete_stale(now, KEEP_REVOKED_SESSIONS)
         events = RateLimiter(db).delete_older_than(now - KEEP_RATE_LIMIT_EVENTS)
-    logger.info("Cleanup: deleted %d sessions, %d rate-limit events", sessions, events)
+        resets = PasswordResetRepository(db).delete_stale(now)
+    logger.info(
+        "Cleanup: deleted %d sessions, %d rate-limit events, %d reset tokens", sessions, events, resets
+    )
 
 
 def create_scheduler() -> BackgroundScheduler:

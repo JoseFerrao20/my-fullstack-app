@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.core.email import Email, get_email_sender
 from app.models import Base
 from main import app
 
@@ -43,9 +44,25 @@ def db(engine) -> Iterator[Session]:
         connection.close()
 
 
+class Outbox:
+    """Collects emails instead of sending them."""
+
+    def __init__(self) -> None:
+        self.sent: list[Email] = []
+
+    def send(self, email: Email) -> None:
+        self.sent.append(email)
+
+
 @pytest.fixture
-def client(db: Session) -> Iterator[TestClient]:
+def outbox() -> Outbox:
+    return Outbox()
+
+
+@pytest.fixture
+def client(db: Session, outbox: Outbox) -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_email_sender] = lambda: outbox
     yield TestClient(app)
     app.dependency_overrides.clear()
 

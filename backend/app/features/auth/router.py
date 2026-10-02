@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Header, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Header, Response, status
 
-from app.core.deps import ClientIp, CurrentUser, DbSession
+from app.core.deps import ClientIp, CurrentSession, CurrentUser, DbSession
+from app.core.email import Mailer
 from app.core.envelope import ApiError, Envelope, error_response, ok
 from app.core.rate_limit import RateLimiter
 from app.core.security import (
@@ -12,8 +13,18 @@ from app.core.security import (
     set_access_cookie,
     set_refresh_cookie,
 )
-from app.features.auth.repository import SessionRepository, UserRepository
-from app.features.auth.schemas import LoginIn, ProfileUpdate, SignupIn, UserOut
+from app.features.auth.account import AccountService
+from app.features.auth.repository import PasswordResetRepository, SessionRepository, UserRepository
+from app.features.auth.schemas import (
+    AccountDeleteIn,
+    LoginIn,
+    PasswordChangeIn,
+    PasswordResetConfirmIn,
+    PasswordResetRequestIn,
+    ProfileUpdate,
+    SignupIn,
+    UserOut,
+)
 from app.features.auth.service import AuthService, IssuedTokens
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -25,6 +36,10 @@ RefreshCookie = Annotated[str | None, Cookie(alias=REFRESH_COOKIE)]
 
 def _service(db: DbSession) -> AuthService:
     return AuthService(UserRepository(db), SessionRepository(db), RateLimiter(db))
+
+
+def _account(db: DbSession) -> AccountService:
+    return AccountService(UserRepository(db), SessionRepository(db), PasswordResetRepository(db), RateLimiter(db))
 
 
 def _set_cookies(response: Response, tokens: IssuedTokens) -> None:
@@ -94,3 +109,45 @@ def me(user: CurrentUser):
 def update_me(payload: ProfileUpdate, user: CurrentUser, db: DbSession):
     """Update the profile. `locale` may be null to follow the browser language again."""
     return ok(UserOut.model_validate(_service(db).update_profile(user, payload)))
+
+
+@router.post(
+    "/password-reset/request", response_model=Envelope[None], status_code=status.HTTP_202_ACCEPTED
+)
+def request_password_reset(
+    payload: PasswordResetRequestIn, db: DbSession, ip: ClientIp, mailer: Mailer, background: BackgroundTasks
+):
+    """Email a single-use reset link (valid 1 hour).
+
+    Always answers 202, whether or not the address has an account, so it can't be used to
+    find out who is registered.
+    """
+    email = _account(db).request_password_reset(payload, ip)
+    if email is not None:
+        background.add_task(mailer.send, email)
+    return ok(None)
+
+
+@router.post("/password-reset/confirm", response_model=Envelope[None])
+def confirm_password_reset(payload: PasswordResetConfirmIn, db: DbSession, mailer: Mailer, background: BackgroundTasks):
+    """Set a new password from a reset link. Ends every session of the account."""
+    background.add_task(mailer.send, _account(db).confirm_password_reset(payload))
+    return ok(None)
+
+
+@router.post("/password", response_model=Envelope[None])
+def change_password(
+    payload: PasswordChangeIn, user: CurrentUser, session: CurrentSession, db: DbSession, mailer: Mailer,
+    background: BackgroundTasks,
+):
+    """Change the password. Other devices are logged out; this one stays logged in."""
+    background.add_task(mailer.send, _account(db).change_password(user, session, payload))
+    return ok(None)
+
+
+@router.delete("/me", response_model=Envelope[None])
+def delete_account(payload: AccountDeleteIn, response: Response, user: CurrentUser, db: DbSession):
+    """Permanently delete the account and all its data. Requires the password."""
+    _account(db).delete_account(user, payload)
+    clear_auth_cookies(response)
+    return ok(None)

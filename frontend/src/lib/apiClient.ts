@@ -117,5 +117,5 @@ export const api = {
     request<T>(path, { method: "POST", body, ...opts }),
   patch: <T, M = Record<string, unknown> | null>(path: string, body?: unknown) =>
     request<T, M>(path, { method: "PATCH", body }),
-  delete: <T = null>(path: string) => request<T>(path, { method: "DELETE" }),
+  delete: <T = null>(path: string, body?: unknown) => request<T>(path, { method: "DELETE", body }),
 };

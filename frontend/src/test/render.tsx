@@ -20,7 +20,10 @@ interface Options {
 /** Render a component inside the app's providers and a memory router. */
 export function renderWithProviders(ui: ReactElement, { path = "/", routes = [], queryClient }: Options = {}) {
   const client = queryClient ?? createTestQueryClient();
-  const router = createMemoryRouter([{ path, element: ui }, ...routes], { initialEntries: [path] });
+  // `path` may carry a query string (e.g. "/reset-password?token=x"); routes match on the pathname only.
+  const router = createMemoryRouter([{ path: path.split("?")[0], element: ui }, ...routes], {
+    initialEntries: [path],
+  });
   const user = userEvent.setup();
   const result = render(
     <QueryClientProvider client={client}>

@@ -16,6 +16,17 @@ class Settings(BaseSettings):
     notification_interval_seconds: int = 60
     due_soon_window_hours: int = 24
 
+    # Email (Mailpit in docker-compose catches everything in development).
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_starttls: bool = False
+    mail_from: str = "Task Manager <no-reply@taskmanager.local>"
+    # Public URL of the frontend, used to build links in emails.
+    app_base_url: str = "http://localhost"
+    password_reset_ttl_minutes: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:

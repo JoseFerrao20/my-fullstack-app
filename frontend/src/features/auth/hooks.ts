@@ -55,3 +55,26 @@ export function useUpdateProfile() {
     onSuccess: (user) => queryClient.setQueryData(meKey, user),
   });
 }
+
+/** Forget everything about the current user (after logout-all or account deletion). */
+function useSignedOut() {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.clear();
+    queryClient.setQueryData(meKey, null);
+  };
+}
+
+export function useLogoutAll() {
+  const signedOut = useSignedOut();
+  return useMutation({ mutationFn: authApi.logoutAll, onSuccess: signedOut });
+}
+
+export function useDeleteAccount() {
+  const signedOut = useSignedOut();
+  return useMutation({ mutationFn: authApi.deleteAccount, onSuccess: signedOut });
+}
+
+export function useChangePassword() {
+  return useMutation({ mutationFn: authApi.changePassword });
+}
