@@ -41,6 +41,7 @@ Root:
 - The backend Dockerfile has a `prod` target (no dev deps, non-root `app` user, healthcheck) and a `dev` target (last stage, used by `docker-compose.yml` and CI).
 - `ENVIRONMENT=production` makes the backend refuse to start with unsafe settings (`Settings.production_problems()` in `core/config.py`: dev/short JWT secret, non-secure cookies, non-https `APP_BASE_URL`, `DISABLE_RATE_LIMITS`, Mailpit/localhost SMTP). Add new production-only invariants there.
 - Backups: the `backup` service runs `deploy/backup.sh` daily at 03:15 UTC (pg_dump custom format, keeps 7 daily + 4 weekly in the `backups` volume); restore with `deploy/restore.sh` (stop the backend first). `.gitattributes` keeps `*.sh` LF so they run in Linux containers.
+- Deploying: `docs/deploy.md` (Portuguese, step by step for a VPS). On the server, `sh deploy/update.sh [commit]` checks out the commit, backs up, rebuilds, restarts and waits for a healthy backend. `.github/workflows/deploy.yml` runs it over SSH after CI passes on `main` (secrets in the GitHub `production` environment; it skips itself while `DEPLOY_HOST` isn't set).
 
 ## Architecture Decisions
 - REST API with OpenAPI spec
