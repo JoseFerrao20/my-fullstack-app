@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useDeleteTask, useUpdateTask } from "@/features/tasks/hooks";
-import { PRIORITY_LABELS, PRIORITY_STYLES, STATUS_LABELS } from "@/features/tasks/schema";
+import { PRIORITY_LABELS, PRIORITY_STYLES, STATUS_LABELS, recurrenceLabel } from "@/features/tasks/schema";
 import { formatDueDate, isOverdue } from "@/lib/format";
 import type { Task } from "@/lib/types";
 
@@ -31,6 +31,12 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
           <Badge className={PRIORITY_STYLES[task.priority]}>{PRIORITY_LABELS[task.priority]}</Badge>
           {task.status === "in_progress" && (
             <Badge className="bg-indigo-100 text-indigo-800">{STATUS_LABELS.in_progress}</Badge>
+          )}
+          {task.recurrence && (
+            <Badge className="bg-emerald-100 text-emerald-800">
+              <span aria-hidden="true" className="mr-1">↻</span>
+              {recurrenceLabel(task.recurrence, task.recurrenceInterval)}
+            </Badge>
           )}
           {task.category && (
             <Badge className="bg-slate-100 text-slate-700">

@@ -7,7 +7,13 @@ from app.core.envelope import Envelope, PageMeta, ok
 from app.features.categories.repository import CategoryRepository
 from app.features.notifications.repository import NotificationRepository
 from app.features.tasks.repository import TaskRepository
-from app.features.tasks.schemas import TaskCreate, TaskListQuery, TaskOut, TaskUpdate
+from app.features.tasks.schemas import (
+    NextOccurrenceOut,
+    TaskCreate,
+    TaskListQuery,
+    TaskOut,
+    TaskUpdate,
+)
 from app.features.tasks.service import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -41,8 +47,16 @@ def get_task(task_id: int, db: DbSession, user: CurrentUser):
 
 @router.patch("/{task_id}", response_model=Envelope[TaskOut])
 def update_task(task_id: int, payload: TaskUpdate, db: DbSession, user: CurrentUser):
-    """Partially update a task. Send null for dueAt/categoryId/description to clear them."""
-    return ok(TaskOut.model_validate(_service(db, user).update(task_id, payload)))
+    """Partially update a task. Send null for dueAt/categoryId/description/recurrence to clear them.
+
+    Completing a recurring task creates its next occurrence, returned in `meta.nextOccurrence`.
+    """
+    task, next_task = _service(db, user).update(task_id, payload)
+    meta = None
+    if next_task is not None:
+        next_out = NextOccurrenceOut.model_validate(next_task)
+        meta = {"nextOccurrence": next_out.model_dump(mode="json", by_alias=True)}
+    return ok(TaskOut.model_validate(task), meta)
 
 
 @router.delete("/{task_id}", response_model=Envelope[None])

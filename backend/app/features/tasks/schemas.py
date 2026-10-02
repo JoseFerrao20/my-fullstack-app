@@ -5,7 +5,8 @@ from pydantic import AwareDatetime, Field, field_validator
 
 from app.core.schemas import CamelModel
 from app.features.categories.schemas import CategoryOut
-from app.features.tasks.models import TaskPriority, TaskStatus
+from app.features.tasks.models import TaskPriority, TaskRecurrence, TaskStatus
+from app.features.tasks.recurrence import is_valid_timezone
 
 TaskSort = Literal[
     "createdAt", "-createdAt", "dueAt", "-dueAt", "priority", "-priority", "title", "-completedAt"
@@ -21,6 +22,12 @@ def _strip_title(v: str | None) -> str | None:
     return v
 
 
+def _check_timezone(v: str | None) -> str | None:
+    if v is not None and not is_valid_timezone(v):
+        raise ValueError("Unknown time zone")
+    return v
+
+
 class TaskCreate(CamelModel):
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=5000)
@@ -28,14 +35,18 @@ class TaskCreate(CamelModel):
     priority: TaskPriority = TaskPriority.MEDIUM
     due_at: AwareDatetime | None = None
     category_id: int | None = None
+    recurrence: TaskRecurrence | None = None
+    recurrence_interval: int = Field(default=1, ge=1, le=365)
+    recurrence_timezone: str | None = Field(default=None, max_length=64)
 
     strip_title = field_validator("title")(_strip_title)
+    check_timezone = field_validator("recurrence_timezone")(_check_timezone)
 
 
 class TaskUpdate(CamelModel):
     """Partial update: only fields present in the body are changed.
 
-    description, dueAt and categoryId may be sent as null to clear them.
+    description, dueAt, categoryId and recurrence may be sent as null to clear them.
     """
 
     title: str | None = Field(default=None, min_length=1, max_length=200)
@@ -44,10 +55,14 @@ class TaskUpdate(CamelModel):
     priority: TaskPriority | None = None
     due_at: AwareDatetime | None = None
     category_id: int | None = None
+    recurrence: TaskRecurrence | None = None
+    recurrence_interval: int | None = Field(default=None, ge=1, le=365)
+    recurrence_timezone: str | None = Field(default=None, max_length=64)
 
     strip_title = field_validator("title")(_strip_title)
+    check_timezone = field_validator("recurrence_timezone")(_check_timezone)
 
-    @field_validator("status", "priority", "title")
+    @field_validator("status", "priority", "title", "recurrence_interval")
     @classmethod
     def not_null(cls, v):
         if v is None:
@@ -77,5 +92,16 @@ class TaskOut(CamelModel):
     completed_at: datetime | None
     category_id: int | None
     category: CategoryOut | None
+    recurrence: TaskRecurrence | None
+    recurrence_interval: int
+    recurrence_timezone: str | None
+    next_occurrence_id: int | None
     created_at: datetime
     updated_at: datetime
+
+
+class NextOccurrenceOut(CamelModel):
+    """Returned in `meta.nextOccurrence` when completing a recurring task creates the next one."""
+
+    id: int
+    due_at: datetime

@@ -4,6 +4,7 @@
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type NotificationType = "due_soon" | "overdue";
+export type TaskRecurrence = "daily" | "weekly" | "monthly";
 
 export interface User {
   id: number;
@@ -29,6 +30,10 @@ export interface Task {
   completedAt: string | null;
   categoryId: number | null;
   category: Category | null;
+  recurrence: TaskRecurrence | null;
+  recurrenceInterval: number;
+  recurrenceTimezone: string | null;
+  nextOccurrenceId: number | null;
   createdAt: string;
   updatedAt: string;
 }

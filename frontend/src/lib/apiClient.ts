@@ -115,6 +115,7 @@ export const api = {
     request<T, M>(path, { query }),
   post: <T>(path: string, body?: unknown, opts?: Pick<RequestOptions, "skipRefresh">) =>
     request<T>(path, { method: "POST", body, ...opts }),
-  patch: <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body }),
+  patch: <T, M = Record<string, unknown> | null>(path: string, body?: unknown) =>
+    request<T, M>(path, { method: "PATCH", body }),
   delete: <T = null>(path: string) => request<T>(path, { method: "DELETE" }),
 };

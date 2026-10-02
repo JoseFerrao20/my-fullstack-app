@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/Badge";
-import { PRIORITY_LABELS, PRIORITY_STYLES, STATUS_LABELS } from "@/features/tasks/schema";
+import { PRIORITY_LABELS, PRIORITY_STYLES, STATUS_LABELS, recurrenceLabel } from "@/features/tasks/schema";
 import { formatDueDate, isOverdue } from "@/lib/format";
 import type { Task, TaskStatus } from "@/lib/types";
 
@@ -51,6 +51,12 @@ export function TaskCard({ task, onOpen, onMove, overlay = false }: Props) {
 
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge className={PRIORITY_STYLES[task.priority]}>{PRIORITY_LABELS[task.priority]}</Badge>
+          {task.recurrence && (
+            <Badge className="bg-emerald-100 text-emerald-800">
+              <span aria-hidden="true" className="mr-1">↻</span>
+              {recurrenceLabel(task.recurrence, task.recurrenceInterval)}
+            </Badge>
+          )}
           {task.category && (
             <Badge className="bg-slate-100 text-slate-700">
               <span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: task.category.color }} />

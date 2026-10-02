@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
 import { tasksApi, type TaskFilters } from "@/features/tasks/api";
-import { tasksKey } from "@/features/tasks/hooks";
+import { tasksKey, useNextOccurrenceToast } from "@/features/tasks/hooks";
 import type { ApiResult } from "@/lib/apiClient";
 import type { PageMeta, Task, TaskStatus } from "@/lib/types";
 
@@ -19,6 +19,7 @@ interface MoveInput {
 export function useMoveTask() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const notifyNext = useNextOccurrenceToast();
 
   return useMutation({
     mutationFn: ({ task, status }: MoveInput) => tasksApi.update(task.id, { status }),
@@ -65,6 +66,8 @@ export function useMoveTask() {
       }
       return { snapshot };
     },
+
+    onSuccess: notifyNext,
 
     onError: (err, _input, context) => {
       for (const [key, page] of context?.snapshot ?? []) queryClient.setQueryData(key, page);

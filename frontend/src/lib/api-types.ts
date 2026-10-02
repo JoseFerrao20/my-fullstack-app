@@ -142,7 +142,9 @@ export interface paths {
         head?: never;
         /**
          * Update Task
-         * @description Partially update a task. Send null for dueAt/categoryId/description to clear them.
+         * @description Partially update a task. Send null for dueAt/categoryId/description/recurrence to clear them.
+         *
+         *     Completing a recurring task creates its next occurrence, returned in `meta.nextOccurrence`.
          */
         patch: operations["update_task_api_tasks__task_id__patch"];
         trace?: never;
@@ -441,6 +443,14 @@ export interface components {
             dueAt?: string | null;
             /** Categoryid */
             categoryId?: number | null;
+            recurrence?: components["schemas"]["TaskRecurrence"] | null;
+            /**
+             * Recurrenceinterval
+             * @default 1
+             */
+            recurrenceInterval: number;
+            /** Recurrencetimezone */
+            recurrenceTimezone?: string | null;
         };
         /** TaskOut */
         TaskOut: {
@@ -459,6 +469,13 @@ export interface components {
             /** Categoryid */
             categoryId: number | null;
             category: components["schemas"]["CategoryOut"] | null;
+            recurrence: components["schemas"]["TaskRecurrence"] | null;
+            /** Recurrenceinterval */
+            recurrenceInterval: number;
+            /** Recurrencetimezone */
+            recurrenceTimezone: string | null;
+            /** Nextoccurrenceid */
+            nextOccurrenceId: number | null;
             /**
              * Createdat
              * Format: date-time
@@ -476,6 +493,11 @@ export interface components {
          */
         TaskPriority: "low" | "medium" | "high" | "urgent";
         /**
+         * TaskRecurrence
+         * @enum {string}
+         */
+        TaskRecurrence: "daily" | "weekly" | "monthly";
+        /**
          * TaskStatus
          * @enum {string}
          */
@@ -484,7 +506,7 @@ export interface components {
          * TaskUpdate
          * @description Partial update: only fields present in the body are changed.
          *
-         *     description, dueAt and categoryId may be sent as null to clear them.
+         *     description, dueAt, categoryId and recurrence may be sent as null to clear them.
          */
         TaskUpdate: {
             /** Title */
@@ -497,6 +519,11 @@ export interface components {
             dueAt?: string | null;
             /** Categoryid */
             categoryId?: number | null;
+            recurrence?: components["schemas"]["TaskRecurrence"] | null;
+            /** Recurrenceinterval */
+            recurrenceInterval?: number | null;
+            /** Recurrencetimezone */
+            recurrenceTimezone?: string | null;
         };
         /** UserOut */
         UserOut: {
@@ -691,7 +718,7 @@ export interface operations {
                 dueBefore?: string | null;
                 dueAfter?: string | null;
                 q?: string | null;
-                sort?: "createdAt" | "-createdAt" | "dueAt" | "-dueAt" | "priority" | "-priority" | "title";
+                sort?: "createdAt" | "-createdAt" | "dueAt" | "-dueAt" | "priority" | "-priority" | "title" | "-completedAt";
                 page?: number;
                 pageSize?: number;
             };

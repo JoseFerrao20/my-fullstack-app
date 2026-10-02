@@ -10,6 +10,8 @@ import {
   emptyTaskForm,
   formToInput,
   PRIORITY_LABELS,
+  RECURRENCE_LABELS,
+  recurrenceUnit,
   STATUS_LABELS,
   taskFormSchema,
   taskToForm,
@@ -35,6 +37,7 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors },
   } = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -49,8 +52,11 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
     }
   }, [open, task, reset]);
 
+  const recurrence = watch("recurrence");
+  const interval = Number(watch("recurrenceInterval")) || 1;
+
   const onSubmit = handleSubmit((values) => {
-    const input = formToInput(values);
+    const input = formToInput(values, task);
     const options = {
       onSuccess: onClose,
       onError: (err: Error) => {
@@ -97,7 +103,33 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
           </Select>
           <Input label="Due date" type="datetime-local" error={errors.dueAt?.message} {...register("dueAt")} />
           <CategorySelect label="Category" error={errors.categoryId?.message} {...register("categoryId")} />
+          <Select label="Repeat" {...register("recurrence")}>
+            <option value="">Never</option>
+            {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+          {recurrence && (
+            <div className="flex items-end gap-2">
+              <div className="w-24">
+                <Input
+                  label="Every"
+                  type="number"
+                  min={1}
+                  max={365}
+                  error={errors.recurrenceInterval?.message}
+                  {...register("recurrenceInterval")}
+                />
+              </div>
+              <span className="pb-2 text-sm text-slate-600">{recurrenceUnit(recurrence, interval)}</span>
+            </div>
+          )}
         </div>
+        {recurrence && (
+          <p className="text-xs text-slate-500">When you complete this task, the next one is created automatically.</p>
+        )}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel

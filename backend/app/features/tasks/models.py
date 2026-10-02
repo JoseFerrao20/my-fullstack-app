@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base, TimestampMixin
@@ -20,6 +20,12 @@ class TaskPriority(enum.StrEnum):
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
+
+
+class TaskRecurrence(enum.StrEnum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
 
 
 def _values(enum_cls: type[enum.Enum]) -> list[str]:
@@ -48,5 +54,18 @@ class Task(TimestampMixin, Base):
     )
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Recurrence: completing the task creates the next occurrence (see tasks/recurrence.py).
+    recurrence: Mapped[TaskRecurrence | None] = mapped_column(
+        Enum(TaskRecurrence, name="task_recurrence", values_callable=_values)
+    )
+    recurrence_interval: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    # IANA zone whose wall-clock time is kept (09:00 Europe/Lisbon stays 09:00 across DST).
+    recurrence_timezone: Mapped[str | None] = mapped_column(String(64))
+    # First due date of the series; each occurrence is anchor + n * step, so day 31 doesn't drift.
+    recurrence_anchor_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    next_occurrence_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="SET NULL")
+    )
 
     category: Mapped[Category | None] = relationship(lazy="joined")

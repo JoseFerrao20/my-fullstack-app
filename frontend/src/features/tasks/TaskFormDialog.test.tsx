@@ -42,7 +42,75 @@ describe("TaskFormDialog", () => {
       priority: "urgent",
       dueAt: new Date("2030-05-01T09:30").toISOString(),
       categoryId: workCategory.id,
+      recurrence: null,
+      recurrenceInterval: 1,
+      recurrenceTimezone: null,
     });
+  });
+
+  it("creates a repeating task with the browser's time zone", async () => {
+    let body: Record<string, unknown> = {};
+    server.use(
+      http.post(apiUrl("/tasks"), async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return ok(makeTask());
+      }),
+    );
+    const onClose = vi.fn();
+    const { user } = renderWithProviders(<TaskFormDialog open task={null} onClose={onClose} />);
+
+    await user.type(screen.getByLabelText("Title"), "Standup");
+    await user.type(screen.getByLabelText("Due date"), "2030-05-06T09:00");
+    expect(screen.queryByLabelText("Every")).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Repeat"), "weekly");
+    const every = screen.getByLabelText("Every");
+    await user.clear(every);
+    await user.type(every, "2");
+    expect(screen.getByText("weeks")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Create task" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(body).toMatchObject({
+      recurrence: "weekly",
+      recurrenceInterval: 2,
+      recurrenceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+  });
+
+  it("requires a due date for repeating tasks", async () => {
+    const onClose = vi.fn();
+    const { user } = renderWithProviders(<TaskFormDialog open task={null} onClose={onClose} />);
+    await user.type(screen.getByLabelText("Title"), "Standup");
+    await user.selectOptions(screen.getByLabelText("Repeat"), "daily");
+    await user.click(screen.getByRole("button", { name: "Create task" }));
+    expect(await screen.findByText("Repeating tasks need a due date")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("keeps an existing series in its original time zone", async () => {
+    let body: Record<string, unknown> = {};
+    server.use(
+      http.patch(apiUrl("/tasks/:id"), async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return ok(makeTask());
+      }),
+    );
+    const task = makeTask({
+      id: 5,
+      dueAt: "2030-05-06T09:00:00Z",
+      recurrence: "monthly",
+      recurrenceInterval: 3,
+      recurrenceTimezone: "Asia/Tokyo",
+    });
+    const onClose = vi.fn();
+    const { user } = renderWithProviders(<TaskFormDialog open task={task} onClose={onClose} />);
+
+    expect(screen.getByLabelText("Repeat")).toHaveValue("monthly");
+    expect(screen.getByLabelText("Every")).toHaveValue(3);
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(body).toMatchObject({ recurrence: "monthly", recurrenceInterval: 3, recurrenceTimezone: "Asia/Tokyo" });
   });
 
   it("prefills and patches an existing task", async () => {
