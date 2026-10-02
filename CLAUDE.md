@@ -36,6 +36,12 @@ Root:
 - Mailpit catches all outgoing email in development: inbox at http://localhost:8025
 - `docker compose run --rm backend python -m app.core.push` - Generate VAPID keys for browser push (put them in the gitignored root `.env`; without them push is simply off)
 
+## Production
+- `docker-compose.prod.yml` (project name `taskapp-prod`, settings in the gitignored `.env.production`, template `.env.production.example`): Caddy (`deploy/Caddyfile`, automatic HTTPS, security headers) is the only service with published ports; it proxies to the frontend's nginx, which forwards `/api` to the backend. `DOMAIN` can be `<ip-with-dashes>.sslip.io` until there's a real domain.
+- The backend Dockerfile has a `prod` target (no dev deps, non-root `app` user, healthcheck) and a `dev` target (last stage, used by `docker-compose.yml` and CI).
+- `ENVIRONMENT=production` makes the backend refuse to start with unsafe settings (`Settings.production_problems()` in `core/config.py`: dev/short JWT secret, non-secure cookies, non-https `APP_BASE_URL`, `DISABLE_RATE_LIMITS`, Mailpit/localhost SMTP). Add new production-only invariants there.
+- Backups: the `backup` service runs `deploy/backup.sh` daily at 03:15 UTC (pg_dump custom format, keeps 7 daily + 4 weekly in the `backups` volume); restore with `deploy/restore.sh` (stop the backend first). `.gitattributes` keeps `*.sh` LF so they run in Linux containers.
+
 ## Architecture Decisions
 - REST API with OpenAPI spec
 - JWT authentication

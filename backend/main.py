@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 
 from app import models  # noqa: F401  (register all models on Base.metadata)
-from app.core.config import get_settings
+from app.core.config import check_production_settings, get_settings
 from app.core.envelope import register_exception_handlers
 from app.core.scheduler import create_scheduler
 from app.features.auth.router import router as auth_router
@@ -19,6 +19,7 @@ from app.features.tasks.router import router as tasks_router
 from app.features.tasks.router import trash_router
 
 logging.basicConfig(level=logging.INFO)
+check_production_settings(get_settings())
 
 
 @asynccontextmanager
