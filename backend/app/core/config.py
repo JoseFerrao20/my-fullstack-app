@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     vapid_private_key: str | None = None
     vapid_subject: str = "mailto:admin@taskmanager.local"
 
+    # End-to-end tests only: every request comes from one IP, so real limits would block reruns.
+    # Never set this in production (the production checks refuse to start with it).
+    disable_rate_limits: bool = False
+
     @property
     def push_enabled(self) -> bool:
         return bool(self.vapid_public_key and self.vapid_private_key)

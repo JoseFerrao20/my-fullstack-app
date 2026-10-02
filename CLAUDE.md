@@ -26,7 +26,9 @@ Backend (run in `backend/`, after `pip install -e ".[dev]"`):
 - `alembic revision --autogenerate -m "message"` - New migration after model changes
 - `ruff check .` - Lint (config in `pyproject.toml`). Without local Python: `docker compose run --rm --no-deps backend ruff check .`
 
-CI (`.github/workflows/ci.yml`) runs on every PR and push to `main`: backend ruff + `alembic upgrade head && alembic check` on an empty DB + pytest; frontend lint, `tsc`, vitest, build; and the Docker image builds.
+CI (`.github/workflows/ci.yml`) runs on every PR and push to `main`: backend ruff + `alembic upgrade head && alembic check` on an empty DB + pytest; frontend lint, `tsc`, vitest, build; then Playwright end-to-end tests against the full Docker stack (which also builds the images).
+
+End-to-end (run in `e2e/`, see `e2e/README.md`): start the stack with `DISABLE_RATE_LIMITS=true docker compose up -d --build`, then `npm ci && npx playwright install chromium && npm test`. Each test signs up its own user. Pages loaded on demand (board, calendar, settings, trash, password pages) need an explicit wait for their heading after client-side navigation.
 
 Root:
 - `docker-compose up` - Full stack (app at http://localhost, API at :8000)
