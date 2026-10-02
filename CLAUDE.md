@@ -40,7 +40,8 @@ Root:
 - New models must be imported in `backend/app/models.py` so Alembic and the tests see them.
 - Auth: JWTs live in httpOnly cookies (`access_token` 15 min, `refresh_token` 7 days scoped to `/api/auth`). The frontend never sees tokens; `frontend/src/lib/apiClient.ts` retries once after `POST /api/auth/refresh` on a 401.
 - Notifications: an APScheduler job (`backend/app/features/notifications/scheduler.py`, started in `main.py` lifespan) inserts `due_soon`/`overdue` rows every 60s. `UNIQUE(task_id, type)` + `ON CONFLICT DO NOTHING` keeps it idempotent. Changing a task's `dueAt` deletes its notifications so they regenerate. The frontend polls `GET /api/notifications` every 60s.
-- Frontend features live in `frontend/src/features/<feature>/` (`api.ts` → `hooks.ts` with TanStack Query → components). Task filters are stored in the URL query string. Shared DTO types are in `src/lib/types.ts`.
+- Frontend features live in `frontend/src/features/<feature>/` (`api.ts` → `hooks.ts` with TanStack Query → components). Task filters are stored in the URL query string (`features/tasks/useFilterParams.ts`, shared by the list at `/` and the Kanban board at `/board`). Shared DTO types are in `src/lib/types.ts`.
+- The board (`features/board/`) issues one `GET /api/tasks?status=…` per column (config in `columns.ts`) and moves cards with `@dnd-kit/core`. `useMoveTask` updates every cached task list optimistically and rolls back on error.
 - Backend tests wrap each test in a rolled-back transaction (`tests/conftest.py`); frontend tests mock the API with MSW (`src/test/server.ts`, `renderWithProviders` in `src/test/render.tsx`).
 
 ## Coding Conventions

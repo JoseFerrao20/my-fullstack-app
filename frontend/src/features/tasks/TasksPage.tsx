@@ -1,49 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CategoriesManager } from "@/features/categories/CategoriesManager";
-import type { TaskFilters as Filters, TaskSort } from "@/features/tasks/api";
 import { TaskFilters } from "@/features/tasks/TaskFilters";
 import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
 import { TaskItem } from "@/features/tasks/TaskItem";
+import { ViewToggle } from "@/features/tasks/ViewToggle";
 import { useTasks } from "@/features/tasks/hooks";
-import type { Task, TaskPriority, TaskStatus } from "@/lib/types";
-
-const PAGE_SIZE = 20;
-
-/** Filters live in the URL so they survive reloads and can be shared. */
-function useFilterParams(): [Filters, (next: Filters) => void] {
-  const [params, setParams] = useSearchParams();
-
-  const filters = useMemo<Filters>(
-    () => ({
-      status: (params.get("status") as TaskStatus) || undefined,
-      priority: (params.get("priority") as TaskPriority) || undefined,
-      categoryId: params.get("categoryId") ? Number(params.get("categoryId")) : undefined,
-      q: params.get("q") || undefined,
-      sort: (params.get("sort") as TaskSort) || "-createdAt",
-      page: Number(params.get("page")) || 1,
-      pageSize: PAGE_SIZE,
-    }),
-    [params],
-  );
-
-  const setFilters = useCallback(
-    (next: Filters) => {
-      const out = new URLSearchParams();
-      for (const [key, value] of Object.entries(next)) {
-        if (key === "pageSize" || value === undefined || value === "") continue;
-        if (key === "sort" && value === "-createdAt") continue;
-        if (key === "page" && value === 1) continue;
-        out.set(key, String(value));
-      }
-      setParams(out, { replace: true });
-    },
-    [setParams],
-  );
-
-  return [filters, setFilters];
-}
+import { useFilterParams } from "@/features/tasks/useFilterParams";
+import type { Task } from "@/lib/types";
 
 export function TasksPage() {
   const [filters, setFilters] = useFilterParams();
@@ -70,7 +34,10 @@ export function TasksPage() {
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Tasks</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-slate-900">Tasks</h1>
+            <ViewToggle filters={filters} />
+          </div>
           <Button onClick={openCreate}>+ New task</Button>
         </div>
 

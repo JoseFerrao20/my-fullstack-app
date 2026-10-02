@@ -90,6 +90,15 @@ def test_list_filters_sort_and_pagination(auth_client):
     assert auth_client.get("/api/tasks", params={"sort": "nope"}).status_code == 422
 
 
+def test_sort_by_most_recently_completed(auth_client):
+    ids = [auth_client.post("/api/tasks", json={"title": t}).json()["data"]["id"] for t in ("A", "B", "C")]
+    for task_id in (ids[1], ids[0]):  # B completed first, then A; C stays open
+        auth_client.patch(f"/api/tasks/{task_id}", json={"status": "done"})
+
+    data = auth_client.get("/api/tasks", params={"status": "done", "sort": "-completedAt"}).json()["data"]
+    assert [t["title"] for t in data] == ["A", "B"]
+
+
 def test_filter_by_category(auth_client):
     cat = auth_client.post("/api/categories", json={"name": "Work"}).json()["data"]
     auth_client.post("/api/tasks", json={"title": "In cat", "categoryId": cat["id"]})

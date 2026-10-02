@@ -1,7 +1,7 @@
 import { api } from "@/lib/apiClient";
 import type { PageMeta, Task, TaskPriority, TaskStatus } from "@/lib/types";
 
-export type TaskSort = "createdAt" | "-createdAt" | "dueAt" | "-dueAt" | "priority" | "-priority" | "title";
+export type TaskSort = "createdAt" | "-createdAt" | "dueAt" | "-dueAt" | "priority" | "-priority" | "title" | "-completedAt";
 
 export interface TaskFilters {
   status?: TaskStatus;

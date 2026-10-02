@@ -7,7 +7,9 @@ from app.core.schemas import CamelModel
 from app.features.categories.schemas import CategoryOut
 from app.features.tasks.models import TaskPriority, TaskStatus
 
-TaskSort = Literal["createdAt", "-createdAt", "dueAt", "-dueAt", "priority", "-priority", "title"]
+TaskSort = Literal[
+    "createdAt", "-createdAt", "dueAt", "-dueAt", "priority", "-priority", "title", "-completedAt"
+]
 
 
 def _strip_title(v: str | None) -> str | None:

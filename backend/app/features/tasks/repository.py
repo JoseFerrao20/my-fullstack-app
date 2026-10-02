@@ -11,6 +11,7 @@ _SORT_COLUMNS = {
     "dueAt": Task.due_at,
     "priority": Task.priority,
     "title": Task.title,
+    "completedAt": Task.completed_at,
 }
 
 
@@ -40,7 +41,8 @@ class TaskRepository:
         column = _SORT_COLUMNS[query.sort.lstrip("-")]
         order = column.desc() if descending else column.asc()
         stmt = (
-            stmt.order_by(order.nulls_last(), Task.id.desc())
+            # Ties (e.g. same priority) fall back to the soonest due date, then newest first.
+            stmt.order_by(order.nulls_last(), Task.due_at.asc().nulls_last(), Task.id.desc())
             .offset((query.page - 1) * query.page_size)
             .limit(query.page_size)
         )
