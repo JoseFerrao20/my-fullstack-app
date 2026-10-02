@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Select } from "@/components/ui/Field";
 import { CategorySelect } from "@/features/categories/CategorySelect";
 import type { TaskFilters as Filters, TaskSort } from "@/features/tasks/api";
+import { useTags } from "@/features/tasks/hooks";
 import { PRIORITIES, STATUSES } from "@/features/tasks/schema";
 import type { TaskPriority, TaskStatus } from "@/lib/types";
 
@@ -18,6 +19,7 @@ interface Props {
 export function TaskFilters({ value, onChange, variant = "list" }: Props) {
   const { t } = useTranslation();
   const isList = variant === "list";
+  const { data: tags = [] } = useTags();
   const [search, setSearch] = useState(value.q ?? "");
 
   // Debounce the search box so we don't fire a request per keystroke.
@@ -31,7 +33,7 @@ export function TaskFilters({ value, onChange, variant = "list" }: Props) {
   const set = (patch: Partial<Filters>) => onChange({ ...value, ...patch, page: 1 });
 
   return (
-    <div className={`grid grid-cols-2 gap-3 rounded-lg bg-white p-4 shadow-sm ${isList ? "md:grid-cols-5" : "md:grid-cols-3"}`}>
+    <div className={`grid grid-cols-2 gap-3 rounded-lg bg-white p-4 shadow-sm ${isList ? "md:grid-cols-6" : "md:grid-cols-4"}`}>
       <div className="col-span-2 md:col-span-1">
         <label htmlFor="task-search" className="block text-sm font-medium text-slate-700">
           {t("filters.search")}
@@ -77,6 +79,16 @@ export function TaskFilters({ value, onChange, variant = "list" }: Props) {
         value={value.categoryId ?? ""}
         onChange={(e) => set({ categoryId: e.target.value ? Number(e.target.value) : undefined })}
       />
+      <Select label={t("filters.tag")} value={value.tag ?? ""} onChange={(e) => set({ tag: e.target.value || undefined })}>
+        <option value="">{t("filters.all")}</option>
+        {/* Keep a tag from the URL selectable even if it no longer exists. */}
+        {value.tag && !tags.some((x) => x.name === value.tag) && <option value={value.tag}>@{value.tag}</option>}
+        {tags.map((x) => (
+          <option key={x.id} value={x.name}>
+            @{x.name} ({x.taskCount})
+          </option>
+        ))}
+      </Select>
       {isList && (
         <Select
           label={t("filters.sort")}

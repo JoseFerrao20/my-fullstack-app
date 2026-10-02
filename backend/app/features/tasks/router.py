@@ -28,7 +28,7 @@ def _service(db: DbSession, user: CurrentUser) -> TaskService:
 @router.get("", response_model=Envelope[list[TaskOut]])
 def list_tasks(query: Annotated[TaskListQuery, Query()], db: DbSession, user: CurrentUser):
     """List the current user's tasks with filters, sorting and pagination."""
-    tasks, total = _service(db, user).list(query)
+    tasks, total = _service(db, user).list_tasks(query)
     return ok(
         [TaskOut.model_validate(t) for t in tasks],
         PageMeta(total=total, page=query.page, page_size=query.page_size),
@@ -61,5 +61,34 @@ def update_task(task_id: int, payload: TaskUpdate, db: DbSession, user: CurrentU
 
 @router.delete("/{task_id}", response_model=Envelope[None])
 def delete_task(task_id: int, db: DbSession, user: CurrentUser):
+    """Move a task to the trash. It can be restored for 30 days, then it's deleted for good."""
     _service(db, user).delete(task_id)
     return ok(None)
+
+
+@router.post("/{task_id}/restore", response_model=Envelope[TaskOut])
+def restore_task(task_id: int, db: DbSession, user: CurrentUser):
+    """Bring a task back from the trash."""
+    return ok(TaskOut.model_validate(_service(db, user).restore(task_id)))
+
+
+trash_router = APIRouter(prefix="/trash", tags=["tasks"])
+
+
+@trash_router.get("", response_model=Envelope[list[TaskOut]])
+def list_trash(db: DbSession, user: CurrentUser):
+    """Trashed tasks, most recently deleted first."""
+    return ok([TaskOut.model_validate(t) for t in _service(db, user).trash()])
+
+
+@trash_router.delete("/{task_id}", response_model=Envelope[None])
+def delete_forever(task_id: int, db: DbSession, user: CurrentUser):
+    """Permanently delete one trashed task."""
+    _service(db, user).delete_forever(task_id)
+    return ok(None)
+
+
+@trash_router.delete("", response_model=Envelope[None])
+def empty_trash(db: DbSession, user: CurrentUser):
+    """Permanently delete everything in the trash."""
+    return ok(None, {"deleted": _service(db, user).empty_trash()})

@@ -58,6 +58,7 @@ function toInput(parsed: ParsedTask, categoryId: number | null): TaskInput {
     recurrenceInterval: parsed.recurrenceInterval,
     recurrenceTimezone: parsed.recurrence ? browserTimeZone() : null,
     remindBeforeMinutes: null,
+    tags: parsed.tags,
   };
 }
 
@@ -111,6 +112,7 @@ export function QuickAdd({ onOpenDetails }: Props) {
         categoryId: categoryId === null ? "" : String(categoryId),
         recurrence: parsed.recurrence ?? "",
         recurrenceInterval: String(parsed.recurrenceInterval),
+        tags: parsed.tags,
       });
       setText("");
     } catch (err) {
@@ -135,6 +137,7 @@ export function QuickAdd({ onOpenDetails }: Props) {
       label: isNewCategory ? t("quickAdd.newCategory", { name: parsed.category }) : `#${existing(parsed.category)?.name}`,
       className: "bg-slate-100 text-slate-700",
     });
+  for (const tag of parsed?.tags ?? []) chips.push({ key: `tag-${tag}`, label: `@${tag}`, className: "border border-slate-300 text-slate-600" });
   if (parsed?.priority)
     chips.push({ key: "priority", label: `! ${t(`task.priority.${parsed.priority}`)}`, className: PRIORITY_STYLES[parsed.priority] });
 

@@ -28,6 +28,7 @@ export function useFilterParams(): [TaskFilters, (next: TaskFilters) => void] {
       status: (params.get("status") as TaskStatus) || undefined,
       priority: (params.get("priority") as TaskPriority) || undefined,
       categoryId: params.get("categoryId") ? Number(params.get("categoryId")) : undefined,
+      tag: params.get("tag") || undefined,
       q: params.get("q") || undefined,
       sort: (params.get("sort") as TaskSort) || DEFAULT_SORT,
       page: Number(params.get("page")) || 1,

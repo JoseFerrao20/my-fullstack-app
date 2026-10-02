@@ -23,7 +23,16 @@ function useInvalidateTasks() {
     queryClient.invalidateQueries({ queryKey: tasksKey });
     // Due-date or status changes can add or clear notifications.
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: tagsKey });
+    queryClient.invalidateQueries({ queryKey: trashKey });
   };
+}
+
+export const tagsKey = ["tags"] as const;
+export const trashKey = ["trash"] as const;
+
+export function useTags() {
+  return useQuery({ queryKey: tagsKey, queryFn: tasksApi.tags, staleTime: 60_000 });
 }
 
 /** Tells the user when completing a recurring task scheduled the next one. */
@@ -56,7 +65,47 @@ export function useUpdateTask() {
   });
 }
 
+/** Moves a task to the trash and offers "Undo" for a few seconds. */
 export function useDeleteTask() {
-  const onSuccess = useInvalidateTasks();
-  return useMutation({ mutationFn: tasksApi.remove, onSuccess });
+  const invalidate = useInvalidateTasks();
+  const restore = useRestoreTask();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (task: Pick<Task, "id" | "title">) => tasksApi.remove(task.id),
+    onSuccess: (_result, task) => {
+      invalidate();
+      toast(t("trash.moved", { title: task.title }), "info", {
+        label: t("trash.undo"),
+        onClick: () => restore.mutate(task),
+      });
+    },
+  });
+}
+
+export function useRestoreTask() {
+  const invalidate = useInvalidateTasks();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (task: Pick<Task, "id" | "title">) => tasksApi.restore(task.id),
+    onSuccess: (_result, task) => {
+      invalidate();
+      toast(t("trash.restored", { title: task.title }));
+    },
+  });
+}
+
+export function useTrash() {
+  return useQuery({ queryKey: trashKey, queryFn: tasksApi.trash });
+}
+
+export function useDeleteForever() {
+  const invalidate = useInvalidateTasks();
+  return useMutation({ mutationFn: tasksApi.deleteForever, onSuccess: invalidate });
+}
+
+export function useEmptyTrash() {
+  const invalidate = useInvalidateTasks();
+  return useMutation({ mutationFn: tasksApi.emptyTrash, onSuccess: invalidate });
 }

@@ -15,6 +15,8 @@ export interface ParsedTask {
   priority: TaskPriority | null;
   /** Category as typed after "#", without the "#". */
   category: string | null;
+  /** Tags typed as "@name", in order. */
+  tags: string[];
 }
 
 const WEEKDAYS: Record<string, number> = {
@@ -111,6 +113,7 @@ export function parseQuickAdd(text: string, now = new Date()): ParsedTask {
   let weekdayFromRecurrence: number | null = null;
   let priority: TaskPriority | null = null;
   let category: string | null = null;
+  const tags: string[] = [];
 
   const setTime = (h: number, m: number) => {
     if (h > 23 || m > 59 || time) return false;
@@ -122,6 +125,12 @@ export function parseQuickAdd(text: string, now = new Date()): ParsedTask {
     { re: /(?<=^|\s)#([\p{L}\p{N}_-]+)/gu, apply: (m, original) => {
       if (category) return false;
       category = original.slice(m.index + 1, m.index + m[0].length);
+    } },
+    // "@tag" only at a word start, so e-mail addresses (ana@x.pt) stay in the title.
+    { re: /(?<=^|\s)@([\p{L}\p{N}_-]+)/gu, apply: (m, original) => {
+      const name = original.slice(m.index + 1, m.index + m[0].length).slice(0, 30);
+      if (tags.length >= 10 || tags.some((t) => t.toLowerCase() === name.toLowerCase())) return;
+      tags.push(name);
     } },
     { re: /(?<=^|\s)!(urgente|urgent|alta|high|media|medium|baixa|low)\b/g, apply: (m) => {
       if (priority) return false;
@@ -254,5 +263,6 @@ export function parseQuickAdd(text: string, now = new Date()): ParsedTask {
     recurrenceInterval: interval,
     priority,
     category,
+    tags,
   };
 }

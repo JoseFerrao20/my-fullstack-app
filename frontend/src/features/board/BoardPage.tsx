@@ -26,8 +26,8 @@ export function BoardPage() {
   const { t } = useTranslation();
   const [filters, setFilters] = useFilterParams();
   const shared = useMemo<SharedFilters>(
-    () => ({ priority: filters.priority, categoryId: filters.categoryId, q: filters.q }),
-    [filters.priority, filters.categoryId, filters.q],
+    () => ({ priority: filters.priority, categoryId: filters.categoryId, tag: filters.tag, q: filters.q }),
+    [filters.priority, filters.categoryId, filters.tag, filters.q],
   );
   const move = useMoveTask();
   const [dragging, setDragging] = useState<Task | null>(null);

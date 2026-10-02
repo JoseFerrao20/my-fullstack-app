@@ -54,6 +54,7 @@ export const taskFormSchema = z
       .refine((v) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 365, "validation.intervalRange"),
     /** "" = no reminder, otherwise minutes before the due date. */
     remindBeforeMinutes: z.string(),
+    tags: z.array(z.string()),
   })
   .refine((v) => v.recurrence === "" || v.dueAt !== "", {
     message: "validation.repeatNeedsDueDate",
@@ -76,6 +77,7 @@ export const emptyTaskForm: TaskFormValues = {
   recurrence: "",
   recurrenceInterval: "1",
   remindBeforeMinutes: "",
+  tags: [],
 };
 
 export function taskToForm(task: Task): TaskFormValues {
@@ -89,6 +91,7 @@ export function taskToForm(task: Task): TaskFormValues {
     recurrence: task.recurrence ?? "",
     recurrenceInterval: String(task.recurrenceInterval),
     remindBeforeMinutes: task.remindBeforeMinutes === null ? "" : String(task.remindBeforeMinutes),
+    tags: task.tags,
   };
 }
 
@@ -106,5 +109,6 @@ export function formToInput(values: TaskFormValues, existing?: Task | null): Tas
     recurrenceInterval: recurrence ? Number(values.recurrenceInterval) : 1,
     recurrenceTimezone: recurrence ? (existing?.recurrenceTimezone ?? browserTimeZone()) : null,
     remindBeforeMinutes: values.remindBeforeMinutes === "" ? null : Number(values.remindBeforeMinutes),
+    tags: values.tags,
   };
 }

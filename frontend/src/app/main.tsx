@@ -3,10 +3,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "@/app/App";
 import { registerServiceWorker } from "@/features/account/push";
+import { applyTheme, watchSystemTheme } from "@/lib/theme";
 import "@/app/index.css";
 
 // For push reminders; harmless where unsupported.
 void registerServiceWorker();
+applyTheme();
+watchSystemTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

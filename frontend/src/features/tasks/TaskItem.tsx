@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { QuickChecklist } from "@/features/subtasks/QuickChecklist";
+import { TagPills } from "@/features/tags/TagInput";
 import { SubtaskProgress } from "@/features/subtasks/SubtaskProgress";
 import { useDeleteTask, useUpdateTask } from "@/features/tasks/hooks";
 import { PRIORITY_STYLES, recurrenceLabel, remindLabel } from "@/features/tasks/schema";
@@ -54,6 +55,7 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
             </Badge>
           )}
           <SubtaskProgress subtasks={task.subtasks} expanded={showSteps} onToggle={() => setShowSteps((v) => !v)} />
+          <TagPills tags={task.tags} />
           {task.category && (
             <Badge className="bg-slate-100 text-slate-700">
               <span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: task.category.color }} />
@@ -78,9 +80,7 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
           className="text-red-600 hover:bg-red-50"
           aria-label={t("task.deleteTitle", { title: task.title })}
           disabled={remove.isPending}
-          onClick={() => {
-            if (confirm(t("task.confirmDelete", { title: task.title }))) remove.mutate(task.id, { onError });
-          }}
+          onClick={() => remove.mutate(task, { onError })}
         >
           {t("task.delete")}
         </Button>

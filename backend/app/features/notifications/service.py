@@ -11,7 +11,7 @@ class NotificationService:
         self.repo = repo
         self.user_id = user_id
 
-    def list(self, query: NotificationListQuery) -> tuple[list[Notification], int]:
+    def list_notifications(self, query: NotificationListQuery) -> tuple[list[Notification], int]:
         items = self.repo.list_for_user(self.user_id, unread_only=query.unread, limit=query.limit)
         return items, self.repo.unread_count(self.user_id)
 

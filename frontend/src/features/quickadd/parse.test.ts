@@ -15,6 +15,7 @@ describe("parseQuickAdd", () => {
       recurrenceInterval: 1,
       priority: "high",
       category: "casa",
+      tags: [],
     });
   });
 

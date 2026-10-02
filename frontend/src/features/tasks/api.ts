@@ -12,6 +12,7 @@ export interface TaskFilters {
   dueBefore?: string;
   priority?: TaskPriority;
   categoryId?: number;
+  tag?: string;
   q?: string;
   sort?: TaskSort;
   page?: number;
@@ -30,6 +31,7 @@ export interface TaskInput {
   /** IANA zone the due time is kept in for repeats; filled from the browser. */
   recurrenceTimezone: string | null;
   remindBeforeMinutes: number | null;
+  tags: string[];
 }
 
 /** Set when completing a recurring task created its next occurrence. */
@@ -41,5 +43,11 @@ export const tasksApi = {
   list: (filters: TaskFilters) => api.get<Task[], PageMeta>("/tasks", { ...filters }),
   create: (input: TaskInput) => api.post<Task>("/tasks", input).then((r) => r.data),
   update: (id: number, input: Partial<TaskInput>) => api.patch<Task, TaskUpdateMeta | null>(`/tasks/${id}`, input),
+  /** Moves the task to the trash. */
   remove: (id: number) => api.delete(`/tasks/${id}`),
+  restore: (id: number) => api.post<Task>(`/tasks/${id}/restore`).then((r) => r.data),
+  trash: () => api.get<Task[]>("/trash").then((r) => r.data),
+  deleteForever: (id: number) => api.delete(`/trash/${id}`),
+  emptyTrash: () => api.delete("/trash"),
+  tags: () => api.get<{ id: number; name: string; taskCount: number }[]>("/tags").then((r) => r.data),
 };

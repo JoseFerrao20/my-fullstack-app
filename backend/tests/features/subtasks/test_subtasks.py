@@ -88,6 +88,8 @@ def test_deleting_the_task_deletes_its_steps(auth_client, db):
     task = _task(auth_client)
     _add(auth_client, task["id"], "Step")
     auth_client.delete(f"/api/tasks/{task['id']}")
+    assert db.scalar(select(func.count()).select_from(Subtask)) == 1  # kept while in the trash
+    auth_client.delete(f"/api/trash/{task['id']}")
     assert db.scalar(select(func.count()).select_from(Subtask)) == 0
 
 

@@ -56,6 +56,7 @@ describe("Quick add", () => {
       recurrenceInterval: 1,
       recurrenceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       remindBeforeMinutes: null,
+      tags: [],
     });
     expect(await screen.findByText("Added “Pagar renda”")).toBeInTheDocument();
     expect(input()).toHaveValue("");

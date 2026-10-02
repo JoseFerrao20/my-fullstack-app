@@ -24,6 +24,9 @@ export { http, HttpResponse };
 const defaultHandlers = [
   // The task edit form loads the checklist; most tests don't care about it.
   http.get(apiUrl("/tasks/:id/subtasks"), () => ok([])),
+  // Tag suggestions/filters and the settings' calendar feed section.
+  http.get(apiUrl("/tags"), () => ok([])),
+  http.get(apiUrl("/calendar-feed"), () => ok({ enabled: false, createdAt: null })),
 ];
 
 export const server = setupServer(...defaultHandlers);

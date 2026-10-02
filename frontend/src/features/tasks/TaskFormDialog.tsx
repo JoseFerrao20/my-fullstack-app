@@ -9,6 +9,7 @@ import { Input, Select, Textarea } from "@/components/ui/Field";
 import { CategorySelect } from "@/features/categories/CategorySelect";
 import { subtasksApi } from "@/features/subtasks/api";
 import { DraftChecklistEditor, LiveChecklistEditor } from "@/features/subtasks/ChecklistEditor";
+import { TagInput } from "@/features/tags/TagInput";
 import { tasksKey, useCreateTask, useUpdateTask } from "@/features/tasks/hooks";
 import {
   emptyTaskForm,
@@ -51,6 +52,7 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
     handleSubmit,
     reset,
     setError,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<TaskFormValues>({
@@ -117,6 +119,11 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
           label={t("taskForm.description")}
           error={errors.description?.message}
           {...register("description")}
+        />
+        <TagInput
+          label={t("taskForm.tags")}
+          value={watch("tags")}
+          onChange={(tags) => setValue("tags", tags, { shouldDirty: true })}
         />
         {task ? (
           <LiveChecklistEditor taskId={task.id} />

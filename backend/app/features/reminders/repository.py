@@ -89,6 +89,7 @@ class ReminderRepository:
             (literal("Reminder: ") + Task.title).label("message"),
         ).where(
             Task.status != TaskStatus.DONE,
+            Task.deleted_at.is_(None),
             Task.due_at.is_not(None),
             Task.remind_before_minutes.is_not(None),
             remind_at <= now,
@@ -111,6 +112,7 @@ class ReminderRepository:
                 .where(
                     Task.user_id == user_id,
                     Task.status != TaskStatus.DONE,
+                    Task.deleted_at.is_(None),
                     Task.due_at.is_not(None),
                     Task.due_at < before,
                 )

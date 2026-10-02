@@ -47,6 +47,10 @@ export interface Task {
   remindBeforeMinutes: number | null;
   /** The checklist, in order. */
   subtasks: Subtask[];
+  /** Tag names, A–Z. */
+  tags: string[];
+  /** Set while the task is in the trash. */
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

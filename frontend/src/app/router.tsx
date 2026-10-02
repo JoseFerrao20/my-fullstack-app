@@ -1,22 +1,29 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Layout } from "@/app/Layout";
-import { SettingsPage } from "@/features/account/SettingsPage";
 import { TodayPage } from "@/features/agenda/TodayPage";
 import { UpcomingPage } from "@/features/agenda/UpcomingPage";
-import { CalendarPage } from "@/features/calendar/CalendarPage";
-import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/LoginPage";
-import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
-import { BoardPage } from "@/features/board/BoardPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { SignupPage } from "@/features/auth/SignupPage";
 import { TasksPage } from "@/features/tasks/TasksPage";
 
+// Pages that aren't on the everyday path load on demand (keeps the first download small;
+// the board and calendar also bring in the drag-and-drop library).
+const lazyPage = <T,>(load: () => Promise<T>, pick: (module: T) => React.ComponentType) => async () => ({
+  Component: pick(await load()),
+});
+
 export const routes = [
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignupPage /> },
-  { path: "/forgot-password", element: <ForgotPasswordPage /> },
-  { path: "/reset-password", element: <ResetPasswordPage /> },
+  {
+    path: "/forgot-password",
+    lazy: lazyPage(() => import("@/features/auth/ForgotPasswordPage"), (m) => m.ForgotPasswordPage),
+  },
+  {
+    path: "/reset-password",
+    lazy: lazyPage(() => import("@/features/auth/ResetPasswordPage"), (m) => m.ResetPasswordPage),
+  },
   {
     path: "/",
     element: (
@@ -29,10 +36,11 @@ export const routes = [
       { index: true, element: <Navigate to="/today" replace /> },
       { path: "today", element: <TodayPage /> },
       { path: "upcoming", element: <UpcomingPage /> },
-      { path: "calendar", element: <CalendarPage /> },
       { path: "tasks", element: <TasksPage /> },
-      { path: "board", element: <BoardPage /> },
-      { path: "settings", element: <SettingsPage /> },
+      { path: "calendar", lazy: lazyPage(() => import("@/features/calendar/CalendarPage"), (m) => m.CalendarPage) },
+      { path: "board", lazy: lazyPage(() => import("@/features/board/BoardPage"), (m) => m.BoardPage) },
+      { path: "settings", lazy: lazyPage(() => import("@/features/account/SettingsPage"), (m) => m.SettingsPage) },
+      { path: "trash", lazy: lazyPage(() => import("@/features/trash/TrashPage"), (m) => m.TrashPage) },
     ],
   },
   { path: "*", element: <Navigate to="/" replace /> },

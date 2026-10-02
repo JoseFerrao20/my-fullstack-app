@@ -2,6 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import { SubtaskProgress } from "@/features/subtasks/SubtaskProgress";
+import { TagPills } from "@/features/tags/TagInput";
 import { PRIORITY_STYLES, recurrenceLabel, remindLabel, STATUSES } from "@/features/tasks/schema";
 import { formatDueDate, isOverdue } from "@/lib/format";
 import type { Task, TaskStatus } from "@/lib/types";
@@ -68,6 +69,7 @@ export function TaskCard({ task, onOpen, onMove, overlay = false }: Props) {
             </Badge>
           )}
           <SubtaskProgress subtasks={task.subtasks} />
+          <TagPills tags={task.tags} />
           {task.category && (
             <Badge className="bg-slate-100 text-slate-700">
               <span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: task.category.color }} />

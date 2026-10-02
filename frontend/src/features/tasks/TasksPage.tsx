@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { CategoriesManager } from "@/features/categories/CategoriesManager";
 import { TaskFilters } from "@/features/tasks/TaskFilters";
@@ -90,8 +91,12 @@ export function TasksPage() {
         )}
       </div>
 
-      <aside>
+      <aside className="space-y-3">
         <CategoriesManager />
+        <Link to="/trash" className="flex items-center gap-2 px-1 text-sm text-slate-600 hover:text-slate-900">
+          <span aria-hidden="true">🗑</span>
+          {t("trash.link")}
+        </Link>
       </aside>
 
       <TaskFormDialog open={formOpen} task={editing} initialValues={initialValues} onClose={() => setFormOpen(false)} />

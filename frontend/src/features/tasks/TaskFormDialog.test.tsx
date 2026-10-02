@@ -46,6 +46,7 @@ describe("TaskFormDialog", () => {
       recurrenceInterval: 1,
       recurrenceTimezone: null,
       remindBeforeMinutes: null,
+      tags: [],
     });
   });
 
