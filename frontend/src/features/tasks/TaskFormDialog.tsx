@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -44,8 +44,12 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
   const update = useUpdateTask();
   const mutation = task ? update : create;
   const queryClient = useQueryClient();
-  // Steps typed while creating a task; saved once the task exists.
+  // Steps typed while creating a task; saved once the task exists, cleared whenever the dialog closes.
   const [draftSteps, setDraftSteps] = useState<string[]>([]);
+  const close = () => {
+    setDraftSteps([]);
+    onClose();
+  };
 
   const {
     register,
@@ -53,33 +57,38 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
     reset,
     setError,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: emptyTaskForm,
   });
 
+  // Mutation reset functions are stable; initialValues only changes when a new task is started.
+  const resetCreate = create.reset;
+  const resetUpdate = update.reset;
   useEffect(() => {
     if (open) {
       reset(task ? taskToForm(task) : { ...emptyTaskForm, ...initialValues });
-      setDraftSteps([]);
-      create.reset();
-      update.reset();
+      resetCreate();
+      resetUpdate();
     }
-  }, [open, task, reset]); // initialValues is read when the dialog opens
+  }, [open, task, initialValues, reset, resetCreate, resetUpdate]);
 
-  const recurrence = watch("recurrence");
+  const recurrence = useWatch({ control, name: "recurrence" });
+  const interval = Number(useWatch({ control, name: "recurrenceInterval" })) || 1;
+  const tags = useWatch({ control, name: "tags" });
   // Keep a non-preset value (e.g. set through the API) selectable.
   const savedRemind = task?.remindBeforeMinutes;
   const remindOptions =
-    savedRemind != null && !REMIND_OPTIONS.includes(savedRemind) ? [...REMIND_OPTIONS, savedRemind].sort((a, b) => a - b) : REMIND_OPTIONS;
-  const interval = Number(watch("recurrenceInterval")) || 1;
+    savedRemind != null && !REMIND_OPTIONS.includes(savedRemind)
+      ? [...REMIND_OPTIONS, savedRemind].sort((a, b) => a - b)
+      : REMIND_OPTIONS;
 
   const onSubmit = handleSubmit((values) => {
     const input = formToInput(values, task);
     const options = {
-      onSuccess: onClose,
+      onSuccess: close,
       onError: (err: Error) => {
         if (err instanceof ApiError) {
           for (const fe of err.fieldErrors) {
@@ -96,7 +105,7 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
           // In order, so the checklist keeps the order it was typed in.
           for (const title of draftSteps) await subtasksApi.create(created.id, title);
           if (draftSteps.length) await queryClient.invalidateQueries({ queryKey: tasksKey });
-          onClose();
+          close();
         },
       });
   });
@@ -107,7 +116,7 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
       : null;
 
   return (
-    <Dialog open={open} title={task ? t("taskForm.editTitle") : t("taskForm.newTitle")} onClose={onClose}>
+    <Dialog open={open} title={task ? t("taskForm.editTitle") : t("taskForm.newTitle")} onClose={close}>
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {generalError && (
           <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
@@ -122,7 +131,7 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
         />
         <TagInput
           label={t("taskForm.tags")}
-          value={watch("tags")}
+          value={tags}
           onChange={(tags) => setValue("tags", tags, { shouldDirty: true })}
         />
         {task ? (
@@ -190,7 +199,7 @@ export function TaskFormDialog({ open, task, initialValues, onClose }: Props) {
         </div>
         {recurrence && <p className="text-xs text-slate-500">{t("taskForm.repeatHint")}</p>}
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={close}>
             {t("taskForm.cancel")}
           </Button>
           <Button type="submit" disabled={mutation.isPending}>

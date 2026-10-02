@@ -15,6 +15,7 @@ Frontend (run in `frontend/`):
 - `npm run test` - Frontend tests
 - `npx vitest run src/features/tasks/TasksPage.test.tsx` - Single test file (add `-t "name"` for one test)
 - `npm run build` - Type check + production build
+- `npm run lint` - ESLint (CI fails on any warning)
 - `npm run gen:api` - Regenerate `src/lib/api-types.ts` from the running backend's OpenAPI spec
 
 Backend (run in `backend/`, after `pip install -e ".[dev]"`):
@@ -23,6 +24,9 @@ Backend (run in `backend/`, after `pip install -e ".[dev]"`):
 - `pytest tests/features/tasks/test_tasks.py::test_delete_task` - Single test
 - `alembic upgrade head` - Apply migrations
 - `alembic revision --autogenerate -m "message"` - New migration after model changes
+- `ruff check .` - Lint (config in `pyproject.toml`). Without local Python: `docker compose run --rm --no-deps backend ruff check .`
+
+CI (`.github/workflows/ci.yml`) runs on every PR and push to `main`: backend ruff + `alembic upgrade head && alembic check` on an empty DB + pytest; frontend lint, `tsc`, vitest, build; and the Docker image builds.
 
 Root:
 - `docker-compose up` - Full stack (app at http://localhost, API at :8000)

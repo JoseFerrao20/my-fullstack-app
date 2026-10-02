@@ -48,7 +48,9 @@ def format_when(due_at: datetime, timezone: str, locale: str | None) -> str:
     return f"{local.day} {month}, {local:%H:%M}"
 
 
-def reminder_push(*, title: str, due_at: datetime, timezone: str, locale: str | None, url: str, task_id: int) -> PushMessage:
+def reminder_push(
+    *, title: str, due_at: datetime, timezone: str, locale: str | None, url: str, task_id: int
+) -> PushMessage:
     t = _texts(locale)
     return PushMessage(
         title=t["reminder_title"].format(title=title),
@@ -58,7 +60,9 @@ def reminder_push(*, title: str, due_at: datetime, timezone: str, locale: str | 
     )
 
 
-def reminder_email(*, to: str, name: str, title: str, due_at: datetime, timezone: str, locale: str | None, link: str) -> Email:
+def reminder_email(
+    *, to: str, name: str, title: str, due_at: datetime, timezone: str, locale: str | None, link: str
+) -> Email:
     t = _texts(locale)
     when = format_when(due_at, timezone, locale)
     return Email(
@@ -74,16 +78,17 @@ def digest_email(
     """`tasks` are (title, due_at, overdue) tuples."""
     t = _texts(locale)
     subject = (t["digest_subject_one"] if len(tasks) == 1 else t["digest_subject_other"]).format(count=len(tasks))
-    lines = [
-        f"- {title} ({format_when(due, timezone, locale)}{', ' + t['digest_overdue'] if overdue else ''})"
+    # (title, "6 May, 09:00[, overdue]", overdue) for each task, shared by the text and HTML versions.
+    rows = [
+        (title, format_when(due, timezone, locale) + (f", {t['digest_overdue']}" if overdue else ""), overdue)
         for title, due, overdue in tasks
     ]
     intro = t["digest_intro"].format(name=name)
-    text = f"{intro}\n\n" + "\n".join(lines) + f"\n\n{t['digest_link']}: {link}"
+    listing = "\n".join(f"- {title} ({when})" for title, when, _ in rows)
+    text = f"{intro}\n\n{listing}\n\n{t['digest_link']}: {link}"
     items = "".join(
-        f"<li>{escape(title)} <span style=\"color:{'#dc2626' if overdue else '#64748b'}\">"
-        f"({escape(format_when(due, timezone, locale))}{', ' + escape(t['digest_overdue']) if overdue else ''})</span></li>"
-        for title, due, overdue in tasks
+        f"<li>{escape(title)} <span style=\"color:{'#dc2626' if overdue else '#64748b'}\">({escape(when)})</span></li>"
+        for title, when, overdue in rows
     )
     html = (
         '<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5;color:#0f172a">'

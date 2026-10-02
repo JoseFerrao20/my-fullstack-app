@@ -39,7 +39,8 @@ def _feed_url(token: str) -> str:
 
 @router.get("", response_model=Envelope[FeedStatusOut])
 def feed_status(user: CurrentUser):
-    return ok(FeedStatusOut(enabled=user.calendar_feed_token_hash is not None, created_at=user.calendar_feed_created_at))
+    enabled = user.calendar_feed_token_hash is not None
+    return ok(FeedStatusOut(enabled=enabled, created_at=user.calendar_feed_created_at))
 
 
 @router.post("", response_model=Envelope[FeedCreatedOut])

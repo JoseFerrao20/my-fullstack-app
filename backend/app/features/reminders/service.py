@@ -80,12 +80,10 @@ class ReminderService:
         timezone = task.recurrence_timezone or prefs.timezone
         url = "/today"
         if prefs.push_reminders:
-            self.push.send_to_user(
-                user_id,
-                reminder_push(
-                    title=task.title, due_at=task.due_at, timezone=timezone, locale=user.locale, url=url, task_id=task.id
-                ),
+            message = reminder_push(
+                title=task.title, due_at=task.due_at, timezone=timezone, locale=user.locale, url=url, task_id=task.id
             )
+            self.push.send_to_user(user_id, message)
         if prefs.email_reminders:
             self.email_sender.send(
                 reminder_email(
