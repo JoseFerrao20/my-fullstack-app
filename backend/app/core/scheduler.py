@@ -10,6 +10,7 @@ from app.core.db import SessionLocal
 from app.core.rate_limit import RateLimiter
 from app.features.auth.repository import PasswordResetRepository, SessionRepository
 from app.features.notifications.scheduler import run_due_notifications_job
+from app.features.reminders.jobs import run_digest_job, run_reminders_job
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,12 @@ def create_scheduler() -> BackgroundScheduler:
         coalesce=True,
         next_run_time=datetime.now(UTC),
     )
+    scheduler.add_job(
+        run_reminders_job, "interval", minutes=1, id="reminders", max_instances=1, coalesce=True,
+        next_run_time=datetime.now(UTC),
+    )
+    # Every 5 minutes is plenty to land inside each user's chosen digest hour.
+    scheduler.add_job(run_digest_job, "interval", minutes=5, id="daily_digest", max_instances=1, coalesce=True)
     scheduler.add_job(
         run_cleanup_job,
         "interval",

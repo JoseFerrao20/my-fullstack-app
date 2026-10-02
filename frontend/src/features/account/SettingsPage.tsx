@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { NotificationsSection } from "@/features/account/NotificationsSection";
 import type { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
@@ -221,6 +222,7 @@ export function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">{t("settings.title")}</h1>
       <ProfileSection user={user} />
+      <NotificationsSection />
       <PasswordSection />
       <SessionsSection />
       <DeleteAccountSection />

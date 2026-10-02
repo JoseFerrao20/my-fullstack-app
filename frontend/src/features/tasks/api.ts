@@ -29,6 +29,7 @@ export interface TaskInput {
   recurrenceInterval: number;
   /** IANA zone the due time is kept in for repeats; filled from the browser. */
   recurrenceTimezone: string | null;
+  remindBeforeMinutes: number | null;
 }
 
 /** Set when completing a recurring task created its next occurrence. */

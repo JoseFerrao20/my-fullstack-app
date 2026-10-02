@@ -48,9 +48,12 @@ class NotificationRepository:
         self.db.commit()
         return result.rowcount
 
-    def delete_for_task(self, task_id: int) -> None:
-        """Remove a task's notifications (no commit; caller owns the transaction)."""
-        self.db.execute(delete(Notification).where(Notification.task_id == task_id))
+    def delete_for_task(self, task_id: int, types: list[NotificationType] | None = None) -> None:
+        """Remove a task's notifications, optionally only some types (no commit; caller owns the transaction)."""
+        stmt = delete(Notification).where(Notification.task_id == task_id)
+        if types is not None:
+            stmt = stmt.where(Notification.type.in_(types))
+        self.db.execute(stmt)
 
     def generate_due_notifications(self, now: datetime, due_soon_window: timedelta) -> int:
         """Insert due_soon/overdue notifications for open tasks. Safe to run repeatedly."""

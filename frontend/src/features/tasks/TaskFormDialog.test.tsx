@@ -45,6 +45,7 @@ describe("TaskFormDialog", () => {
       recurrence: null,
       recurrenceInterval: 1,
       recurrenceTimezone: null,
+      remindBeforeMinutes: null,
     });
   });
 
@@ -75,6 +76,42 @@ describe("TaskFormDialog", () => {
       recurrenceInterval: 2,
       recurrenceTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
+  });
+
+  it("saves a reminder", async () => {
+    let body: Record<string, unknown> = {};
+    server.use(
+      http.post(apiUrl("/tasks"), async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return ok(makeTask());
+      }),
+    );
+    const onClose = vi.fn();
+    const { user } = renderWithProviders(<TaskFormDialog open task={null} onClose={onClose} />);
+    await user.type(screen.getByLabelText("Title"), "Call Ana");
+    await user.type(screen.getByLabelText("Due date"), "2030-05-06T09:00");
+    await user.selectOptions(screen.getByLabelText("Remind me"), "1 hour before");
+    await user.click(screen.getByRole("button", { name: "Create task" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(body.remindBeforeMinutes).toBe(60);
+  });
+
+  it("requires a due date for reminders", async () => {
+    const onClose = vi.fn();
+    const { user } = renderWithProviders(<TaskFormDialog open task={null} onClose={onClose} />);
+    await user.type(screen.getByLabelText("Title"), "Call Ana");
+    await user.selectOptions(screen.getByLabelText("Remind me"), "At the due time");
+    await user.click(screen.getByRole("button", { name: "Create task" }));
+    expect(await screen.findByText("Reminders need a due date")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("keeps a non-preset reminder selectable", () => {
+    const task = makeTask({ dueAt: "2030-05-06T09:00:00Z", remindBeforeMinutes: 45 });
+    renderWithProviders(<TaskFormDialog open task={task} onClose={vi.fn()} />);
+    expect(screen.getByLabelText("Remind me")).toHaveValue("45");
+    expect(screen.getByRole("option", { name: "45 minutes before" })).toBeInTheDocument();
   });
 
   it("requires a due date for repeating tasks", async () => {

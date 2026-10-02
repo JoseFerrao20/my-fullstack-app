@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useDeleteTask, useUpdateTask } from "@/features/tasks/hooks";
-import { PRIORITY_STYLES, recurrenceLabel } from "@/features/tasks/schema";
+import { PRIORITY_STYLES, recurrenceLabel, remindLabel } from "@/features/tasks/schema";
 import { useErrorMessage } from "@/lib/errors";
 import { formatDueDate, isOverdue } from "@/lib/format";
 import type { Task } from "@/lib/types";
@@ -40,6 +40,13 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
             <Badge className="bg-emerald-100 text-emerald-800">
               <span aria-hidden="true" className="mr-1">↻</span>
               {recurrenceLabel(t, task.recurrence, task.recurrenceInterval)}
+            </Badge>
+          )}
+          {task.remindBeforeMinutes !== null && task.dueAt && task.status !== "done" && (
+            <Badge className="bg-amber-50 text-amber-800">
+              <span aria-hidden="true" className="mr-1">🔔</span>
+              <span className="sr-only">{t("reminders.badge", { when: remindLabel(t, task.remindBeforeMinutes) })}</span>
+              <span aria-hidden="true">{remindLabel(t, task.remindBeforeMinutes)}</span>
             </Badge>
           )}
           {task.category && (

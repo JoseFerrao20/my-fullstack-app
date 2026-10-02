@@ -7,6 +7,16 @@ import type { Task, TaskPriority, TaskRecurrence, TaskStatus } from "@/lib/types
 export const STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
 export const PRIORITIES: TaskPriority[] = ["low", "medium", "high", "urgent"];
 export const RECURRENCES: TaskRecurrence[] = ["daily", "weekly", "monthly"];
+/** "Remind me" presets, in minutes before the due date. */
+export const REMIND_OPTIONS = [0, 5, 15, 30, 60, 120, 1440];
+
+/** "At the due time" / "15 minutes before" / "1 hour before" / "1 day before". */
+export function remindLabel(t: TFunction, minutes: number): string {
+  if (minutes === 0) return t("reminders.atDue");
+  if (minutes % 1440 === 0) return t("reminders.days", { count: minutes / 1440 });
+  if (minutes % 60 === 0) return t("reminders.hours", { count: minutes / 60 });
+  return t("reminders.minutes", { count: minutes });
+}
 
 export const PRIORITY_STYLES: Record<TaskPriority, string> = {
   low: "bg-slate-100 text-slate-700",
@@ -42,9 +52,15 @@ export const taskFormSchema = z
     recurrenceInterval: z
       .string()
       .refine((v) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 365, "validation.intervalRange"),
+    /** "" = no reminder, otherwise minutes before the due date. */
+    remindBeforeMinutes: z.string(),
   })
   .refine((v) => v.recurrence === "" || v.dueAt !== "", {
     message: "validation.repeatNeedsDueDate",
+    path: ["dueAt"],
+  })
+  .refine((v) => v.remindBeforeMinutes === "" || v.dueAt !== "", {
+    message: "validation.reminderNeedsDueDate",
     path: ["dueAt"],
   });
 
@@ -59,6 +75,7 @@ export const emptyTaskForm: TaskFormValues = {
   categoryId: "",
   recurrence: "",
   recurrenceInterval: "1",
+  remindBeforeMinutes: "",
 };
 
 export function taskToForm(task: Task): TaskFormValues {
@@ -71,6 +88,7 @@ export function taskToForm(task: Task): TaskFormValues {
     categoryId: task.categoryId === null ? "" : String(task.categoryId),
     recurrence: task.recurrence ?? "",
     recurrenceInterval: String(task.recurrenceInterval),
+    remindBeforeMinutes: task.remindBeforeMinutes === null ? "" : String(task.remindBeforeMinutes),
   };
 }
 
@@ -87,5 +105,6 @@ export function formToInput(values: TaskFormValues, existing?: Task | null): Tas
     recurrence,
     recurrenceInterval: recurrence ? Number(values.recurrenceInterval) : 1,
     recurrenceTimezone: recurrence ? (existing?.recurrenceTimezone ?? browserTimeZone()) : null,
+    remindBeforeMinutes: values.remindBeforeMinutes === "" ? null : Number(values.remindBeforeMinutes),
   };
 }

@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     app_base_url: str = "http://localhost"
     password_reset_ttl_minutes: int = 60
 
+    # Web Push (VAPID). Without both keys, push notifications are simply turned off.
+    vapid_public_key: str | None = None
+    vapid_private_key: str | None = None
+    vapid_subject: str = "mailto:admin@taskmanager.local"
+
+    @property
+    def push_enabled(self) -> bool:
+        return bool(self.vapid_public_key and self.vapid_private_key)
+
 
 @lru_cache
 def get_settings() -> Settings:

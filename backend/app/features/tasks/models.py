@@ -67,5 +67,7 @@ class Task(TimestampMixin, Base):
     next_occurrence_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="SET NULL")
     )
+    # "Remind me N minutes before the due date" (0 = at the due time). Requires due_at.
+    remind_before_minutes: Mapped[int | None] = mapped_column(Integer)
 
     category: Mapped[Category | None] = relationship(lazy="joined")

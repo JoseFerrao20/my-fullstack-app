@@ -3,6 +3,7 @@ from typing import Any
 
 from app.core.envelope import ApiError, not_found
 from app.features.categories.repository import CategoryRepository
+from app.features.notifications.models import NotificationType
 from app.features.notifications.repository import NotificationRepository
 from app.features.tasks.models import Task, TaskStatus
 from app.features.tasks.recurrence import next_due_date
@@ -45,6 +46,7 @@ class TaskService:
         fields = payload.model_dump()
         self._ensure_category(fields.get("category_id"))
         self._apply_series_rules(fields, current=None)
+        self._check_reminder(fields, current=None)
         if fields["status"] == TaskStatus.DONE:
             fields["completed_at"] = datetime.now(UTC)
         return self.tasks.create(self.user_id, **fields)
@@ -60,6 +62,8 @@ class TaskService:
             reanchor = any(changes[k] != getattr(task, k) for k in _SERIES_FIELDS & changes.keys())
             self._apply_series_rules(changes, current=task, reanchor=reanchor)
 
+        self._check_reminder(changes, current=task)
+
         became_done = changes.get("status", task.status) == TaskStatus.DONE and task.status != TaskStatus.DONE
         if "status" in changes and changes["status"] != task.status:
             changes["completed_at"] = datetime.now(UTC) if became_done else None
@@ -67,6 +71,9 @@ class TaskService:
         if "due_at" in changes and changes["due_at"] != task.due_at:
             # Let the scheduler re-evaluate the task against its new due date.
             self.notifications.delete_for_task(task.id)
+        elif changes.get("remind_before_minutes", task.remind_before_minutes) != task.remind_before_minutes:
+            # A new reminder time means the reminder can fire again.
+            self.notifications.delete_for_task(task.id, [NotificationType.REMINDER])
 
         task = self.tasks.update(task, **changes)
         next_task = self._create_next_occurrence(task) if became_done else None
@@ -94,6 +101,12 @@ class TaskService:
         if reanchor or value("recurrence_anchor_at") is None:
             fields["recurrence_anchor_at"] = due_at
 
+    def _check_reminder(self, fields: dict[str, Any], current: Task | None) -> None:
+        remind = fields["remind_before_minutes"] if "remind_before_minutes" in fields else getattr(current, "remind_before_minutes", None)
+        due_at = fields["due_at"] if "due_at" in fields else getattr(current, "due_at", None)
+        if remind is not None and due_at is None:
+            raise _validation_error("dueAt", "A due date is required for reminders")
+
     def _create_next_occurrence(self, task: Task) -> Task | None:
         # next_occurrence_id guards against duplicates when a task is un-completed and completed again.
         if task.recurrence is None or task.due_at is None or task.next_occurrence_id is not None:
@@ -118,6 +131,7 @@ class TaskService:
             recurrence_interval=task.recurrence_interval,
             recurrence_timezone=task.recurrence_timezone,
             recurrence_anchor_at=task.recurrence_anchor_at or task.due_at,
+            remind_before_minutes=task.remind_before_minutes,
         )
         self.tasks.update(task, next_occurrence_id=next_task.id)
         return next_task

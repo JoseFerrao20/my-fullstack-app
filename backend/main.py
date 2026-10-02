@@ -10,6 +10,7 @@ from app.core.scheduler import create_scheduler
 from app.features.auth.router import router as auth_router
 from app.features.categories.router import router as categories_router
 from app.features.notifications.router import router as notifications_router
+from app.features.reminders.router import router as reminders_router
 from app.features.tasks.router import router as tasks_router
 
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +39,7 @@ app = FastAPI(
         {"name": "tasks", "description": "Task CRUD with filters, sorting and pagination"},
         {"name": "categories", "description": "User-defined task categories"},
         {"name": "notifications", "description": "In-app due-date notifications"},
+        {"name": "reminders", "description": "Reminder preferences, daily digest and browser push"},
     ],
 )
 register_exception_handlers(app)
@@ -47,6 +49,7 @@ api.include_router(auth_router)
 api.include_router(tasks_router)
 api.include_router(categories_router)
 api.include_router(notifications_router)
+api.include_router(reminders_router)
 app.include_router(api)
 
 

@@ -30,6 +30,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     recurrenceInterval: 1,
     recurrenceTimezone: null,
     nextOccurrenceId: null,
+    remindBeforeMinutes: null,
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
     ...overrides,

@@ -11,6 +11,13 @@ describe("TaskItem", () => {
     expect(screen.getByText("Every 2 weeks")).toBeInTheDocument();
   });
 
+  it("shows the reminder", () => {
+    renderWithProviders(
+      <TaskItem task={makeTask({ dueAt: "2030-05-06T09:00:00Z", remindBeforeMinutes: 60 })} onEdit={vi.fn()} />,
+    );
+    expect(screen.getByText("Reminder: 1 hour before")).toBeInTheDocument(); // screen-reader text
+  });
+
   it("announces the next occurrence when completing a repeating task", async () => {
     const task = makeTask({ id: 7, title: "Standup", dueAt: "2030-05-06T09:00:00Z", recurrence: "weekly" });
     const nextDue = "2030-05-13T09:00:00Z";

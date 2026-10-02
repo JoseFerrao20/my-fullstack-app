@@ -12,6 +12,8 @@ import {
   formToInput,
   PRIORITIES,
   RECURRENCES,
+  REMIND_OPTIONS,
+  remindLabel,
   recurrenceUnit,
   STATUSES,
   taskFormSchema,
@@ -57,6 +59,10 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
   }, [open, task, reset]);
 
   const recurrence = watch("recurrence");
+  // Keep a non-preset value (e.g. set through the API) selectable.
+  const savedRemind = task?.remindBeforeMinutes;
+  const remindOptions =
+    savedRemind != null && !REMIND_OPTIONS.includes(savedRemind) ? [...REMIND_OPTIONS, savedRemind].sort((a, b) => a - b) : REMIND_OPTIONS;
   const interval = Number(watch("recurrenceInterval")) || 1;
 
   const onSubmit = handleSubmit((values) => {
@@ -120,6 +126,14 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
             error={errors.categoryId?.message}
             {...register("categoryId")}
           />
+          <Select label={t("taskForm.remind")} {...register("remindBeforeMinutes")}>
+            <option value="">{t("taskForm.noReminder")}</option>
+            {remindOptions.map((minutes) => (
+              <option key={minutes} value={minutes}>
+                {remindLabel(t, minutes)}
+              </option>
+            ))}
+          </Select>
           <Select label={t("taskForm.repeat")} {...register("recurrence")}>
             <option value="">{t("taskForm.never")}</option>
             {RECURRENCES.map((value) => (

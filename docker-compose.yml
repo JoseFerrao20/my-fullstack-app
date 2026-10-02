@@ -26,6 +26,10 @@ services:
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       SMTP_PORT: ${SMTP_PORT:-1025}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost}
+      # Web Push keys (generate with `docker compose run --rm backend python -m app.core.push`).
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@taskmanager.local}
     ports:
       - "8000:8000"
     depends_on:

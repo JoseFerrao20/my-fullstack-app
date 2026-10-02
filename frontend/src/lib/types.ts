@@ -3,7 +3,7 @@
 
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
-export type NotificationType = "due_soon" | "overdue";
+export type NotificationType = "due_soon" | "overdue" | "reminder";
 export type TaskRecurrence = "daily" | "weekly" | "monthly";
 
 export interface User {
@@ -36,6 +36,8 @@ export interface Task {
   recurrenceInterval: number;
   recurrenceTimezone: string | null;
   nextOccurrenceId: number | null;
+  /** Minutes before dueAt to remind (0 = at the due time), or null for none. */
+  remindBeforeMinutes: number | null;
   createdAt: string;
   updatedAt: string;
 }

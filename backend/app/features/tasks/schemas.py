@@ -38,6 +38,8 @@ class TaskCreate(CamelModel):
     recurrence: TaskRecurrence | None = None
     recurrence_interval: int = Field(default=1, ge=1, le=365)
     recurrence_timezone: str | None = Field(default=None, max_length=64)
+    # Minutes before the due date (0 = at the due time); up to a week.
+    remind_before_minutes: int | None = Field(default=None, ge=0, le=10080)
 
     strip_title = field_validator("title")(_strip_title)
     check_timezone = field_validator("recurrence_timezone")(_check_timezone)
@@ -58,6 +60,7 @@ class TaskUpdate(CamelModel):
     recurrence: TaskRecurrence | None = None
     recurrence_interval: int | None = Field(default=None, ge=1, le=365)
     recurrence_timezone: str | None = Field(default=None, max_length=64)
+    remind_before_minutes: int | None = Field(default=None, ge=0, le=10080)
 
     strip_title = field_validator("title")(_strip_title)
     check_timezone = field_validator("recurrence_timezone")(_check_timezone)
@@ -98,6 +101,7 @@ class TaskOut(CamelModel):
     recurrence_interval: int
     recurrence_timezone: str | None
     next_occurrence_id: int | None
+    remind_before_minutes: int | None
     created_at: datetime
     updated_at: datetime
 

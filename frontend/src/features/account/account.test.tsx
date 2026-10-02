@@ -100,7 +100,13 @@ describe("Reset password", () => {
 
 describe("Settings", () => {
   beforeEach(() => {
-    server.use(http.get(apiUrl("/auth/me"), () => ok(user)));
+    server.use(
+      http.get(apiUrl("/auth/me"), () => ok(user)),
+      http.get(apiUrl("/reminders/preferences"), () =>
+        ok({ emailReminders: true, pushReminders: true, dailyDigest: false, digestHour: 8, timezone: "UTC" }),
+      ),
+      http.get(apiUrl("/reminders/push/config"), () => ok({ publicKey: null })),
+    );
   });
   afterEach(() => localStorage.clear());
 
