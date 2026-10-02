@@ -336,6 +336,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reminders/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Preferences
+         * @description Reminder and digest settings (defaults if never saved).
+         */
+        get: operations["get_preferences_api_reminders_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Preferences */
+        patch: operations["update_preferences_api_reminders_preferences_patch"];
+        trace?: never;
+    };
+    "/api/reminders/push/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Push Config
+         * @description The VAPID public key browsers need to subscribe, or null when push is off.
+         */
+        get: operations["push_config_api_reminders_push_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reminders/push/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Subscribe
+         * @description Register this browser for push notifications (idempotent).
+         */
+        post: operations["subscribe_api_reminders_push_subscriptions_post"];
+        /** Unsubscribe */
+        delete: operations["unsubscribe_api_reminders_push_subscriptions_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reminders/push/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Test Push
+         * @description Send a test notification to all of the user's devices.
+         */
+        post: operations["send_test_push_api_reminders_push_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -415,6 +497,24 @@ export interface components {
         /** Envelope[NotificationOut] */
         Envelope_NotificationOut_: {
             data?: components["schemas"]["NotificationOut"] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[PreferencesOut] */
+        Envelope_PreferencesOut_: {
+            data?: components["schemas"]["PreferencesOut"] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[PushConfigOut] */
+        Envelope_PushConfigOut_: {
+            data?: components["schemas"]["PushConfigOut"] | null;
             error?: components["schemas"]["ErrorBody"] | null;
             /** Meta */
             meta?: {
@@ -516,7 +616,7 @@ export interface components {
          * NotificationType
          * @enum {string}
          */
-        NotificationType: "due_soon" | "overdue";
+        NotificationType: "due_soon" | "overdue" | "reminder";
         /** PasswordChangeIn */
         PasswordChangeIn: {
             /** Currentpassword */
@@ -541,12 +641,79 @@ export interface components {
             /** Locale */
             locale?: ("pt" | "en") | null;
         };
+        /** PreferencesOut */
+        PreferencesOut: {
+            /**
+             * Emailreminders
+             * @default true
+             */
+            emailReminders: boolean;
+            /**
+             * Pushreminders
+             * @default true
+             */
+            pushReminders: boolean;
+            /**
+             * Dailydigest
+             * @default false
+             */
+            dailyDigest: boolean;
+            /**
+             * Digesthour
+             * @default 8
+             */
+            digestHour: number;
+            /**
+             * Timezone
+             * @default UTC
+             */
+            timezone: string;
+        };
+        /** PreferencesUpdate */
+        PreferencesUpdate: {
+            /** Emailreminders */
+            emailReminders?: boolean | null;
+            /** Pushreminders */
+            pushReminders?: boolean | null;
+            /** Dailydigest */
+            dailyDigest?: boolean | null;
+            /** Digesthour */
+            digestHour?: number | null;
+            /** Timezone */
+            timezone?: string | null;
+        };
         /** ProfileUpdate */
         ProfileUpdate: {
             /** Name */
             name?: string | null;
             /** Locale */
             locale?: ("pt" | "en") | null;
+        };
+        /** PushConfigOut */
+        PushConfigOut: {
+            /** Publickey */
+            publicKey: string | null;
+        };
+        /** PushKeys */
+        PushKeys: {
+            /** P256Dh */
+            p256Dh: string;
+            /** Auth */
+            auth: string;
+        };
+        /**
+         * PushSubscriptionIn
+         * @description The browser's PushSubscription.toJSON() shape.
+         */
+        PushSubscriptionIn: {
+            /** Endpoint */
+            endpoint: string;
+            keys: components["schemas"]["PushKeys"];
+        };
+        /** PushUnsubscribeIn */
+        PushUnsubscribeIn: {
+            /** Endpoint */
+            endpoint: string;
         };
         /** SignupIn */
         SignupIn: {
@@ -584,6 +751,8 @@ export interface components {
             recurrenceInterval: number;
             /** Recurrencetimezone */
             recurrenceTimezone?: string | null;
+            /** Remindbeforeminutes */
+            remindBeforeMinutes?: number | null;
         };
         /** TaskOut */
         TaskOut: {
@@ -609,6 +778,8 @@ export interface components {
             recurrenceTimezone: string | null;
             /** Nextoccurrenceid */
             nextOccurrenceId: number | null;
+            /** Remindbeforeminutes */
+            remindBeforeMinutes: number | null;
             /**
              * Createdat
              * Format: date-time
@@ -657,6 +828,8 @@ export interface components {
             recurrenceInterval?: number | null;
             /** Recurrencetimezone */
             recurrenceTimezone?: string | null;
+            /** Remindbeforeminutes */
+            remindBeforeMinutes?: number | null;
         };
         /** UserOut */
         UserOut: {
@@ -1066,6 +1239,7 @@ export interface operations {
         parameters: {
             query?: {
                 status?: components["schemas"]["TaskStatus"] | null;
+                excludeDone?: boolean;
                 priority?: components["schemas"]["TaskPriority"] | null;
                 categoryId?: number | null;
                 dueBefore?: string | null;
@@ -1478,6 +1652,206 @@ export interface operations {
         };
     };
     mark_all_read_api_notifications_read_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_NoneType_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_preferences_api_reminders_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_PreferencesOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_preferences_api_reminders_preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_PreferencesOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    push_config_api_reminders_push_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_PushConfigOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subscribe_api_reminders_push_subscriptions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "user-agent"?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushSubscriptionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_NoneType_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unsubscribe_api_reminders_push_subscriptions_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushUnsubscribeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_NoneType_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_test_push_api_reminders_push_test_post: {
         parameters: {
             query?: never;
             header?: never;

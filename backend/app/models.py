@@ -6,6 +6,7 @@ from app.features.auth.models import AuthSession, PasswordResetToken, User
 from app.features.categories.models import Category
 from app.features.notifications.models import Notification
 from app.features.reminders.models import NotificationPreferences, PushSubscription
+from app.features.subtasks.models import Subtask
 from app.features.tasks.models import Task
 
-__all__ = ["AuthSession", "Base", "PasswordResetToken", "Category", "Notification", "NotificationPreferences", "PushSubscription", "RateLimitEvent", "Task", "User"]
+__all__ = ["AuthSession", "Base", "PasswordResetToken", "Category", "Notification", "NotificationPreferences", "PushSubscription", "RateLimitEvent", "Subtask", "Task", "User"]

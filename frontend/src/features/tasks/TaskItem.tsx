@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { QuickChecklist } from "@/features/subtasks/QuickChecklist";
+import { SubtaskProgress } from "@/features/subtasks/SubtaskProgress";
 import { useDeleteTask, useUpdateTask } from "@/features/tasks/hooks";
 import { PRIORITY_STYLES, recurrenceLabel, remindLabel } from "@/features/tasks/schema";
 import { useErrorMessage } from "@/lib/errors";
@@ -16,6 +19,7 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
   const toast = useToast();
   const done = task.status === "done";
   const overdue = isOverdue(task);
+  const [showSteps, setShowSteps] = useState(false);
 
   const onError = (err: Error) => toast(errorMessage(err), "error");
 
@@ -49,6 +53,7 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
               <span aria-hidden="true">{remindLabel(t, task.remindBeforeMinutes)}</span>
             </Badge>
           )}
+          <SubtaskProgress subtasks={task.subtasks} expanded={showSteps} onToggle={() => setShowSteps((v) => !v)} />
           {task.category && (
             <Badge className="bg-slate-100 text-slate-700">
               <span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: task.category.color }} />
@@ -57,6 +62,7 @@ export function TaskItem({ task, onEdit }: { task: Task; onEdit: (task: Task) =>
           )}
         </div>
         {task.description && <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{task.description}</p>}
+        {showSteps && task.subtasks.length > 0 && <QuickChecklist task={task} />}
         {task.dueAt && (
           <p className={`mt-1 text-xs ${overdue ? "font-semibold text-red-600" : "text-slate-500"}`}>
             {t(overdue ? "task.overdue" : "task.due", { date: formatDueDate(task.dueAt) })}

@@ -1,12 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input, Select, Textarea } from "@/components/ui/Field";
 import { CategorySelect } from "@/features/categories/CategorySelect";
-import { useCreateTask, useUpdateTask } from "@/features/tasks/hooks";
+import { subtasksApi } from "@/features/subtasks/api";
+import { DraftChecklistEditor, LiveChecklistEditor } from "@/features/subtasks/ChecklistEditor";
+import { tasksKey, useCreateTask, useUpdateTask } from "@/features/tasks/hooks";
 import {
   emptyTaskForm,
   formToInput,
@@ -37,6 +40,9 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
   const create = useCreateTask();
   const update = useUpdateTask();
   const mutation = task ? update : create;
+  const queryClient = useQueryClient();
+  // Steps typed while creating a task; saved once the task exists.
+  const [draftSteps, setDraftSteps] = useState<string[]>([]);
 
   const {
     register,
@@ -53,6 +59,7 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
   useEffect(() => {
     if (open) {
       reset(task ? taskToForm(task) : emptyTaskForm);
+      setDraftSteps([]);
       create.reset();
       update.reset();
     }
@@ -78,7 +85,16 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
       },
     };
     if (task) update.mutate({ id: task.id, ...input }, options);
-    else create.mutate(input, options);
+    else
+      create.mutate(input, {
+        ...options,
+        onSuccess: async (created) => {
+          // In order, so the checklist keeps the order it was typed in.
+          for (const title of draftSteps) await subtasksApi.create(created.id, title);
+          if (draftSteps.length) await queryClient.invalidateQueries({ queryKey: tasksKey });
+          onClose();
+        },
+      });
   });
 
   const generalError =
@@ -100,6 +116,11 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
           error={errors.description?.message}
           {...register("description")}
         />
+        {task ? (
+          <LiveChecklistEditor taskId={task.id} />
+        ) : (
+          <DraftChecklistEditor steps={draftSteps} onChange={setDraftSteps} />
+        )}
         <div className="grid grid-cols-2 gap-4">
           <Select label={t("taskForm.status")} {...register("status")}>
             {STATUSES.map((value) => (

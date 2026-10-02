@@ -5,6 +5,7 @@ from app.core.envelope import ApiError, not_found
 from app.features.categories.repository import CategoryRepository
 from app.features.notifications.models import NotificationType
 from app.features.notifications.repository import NotificationRepository
+from app.features.subtasks.repository import SubtaskRepository
 from app.features.tasks.models import Task, TaskStatus
 from app.features.tasks.recurrence import next_due_date
 from app.features.tasks.repository import TaskRepository
@@ -133,7 +134,9 @@ class TaskService:
             recurrence_anchor_at=task.recurrence_anchor_at or task.due_at,
             remind_before_minutes=task.remind_before_minutes,
         )
+        SubtaskRepository(self.tasks.db).copy_unchecked(task.id, next_task.id)
         self.tasks.update(task, next_occurrence_id=next_task.id)
+        self.tasks.db.refresh(next_task)
         return next_task
 
     def _ensure_category(self, category_id: int | None) -> None:

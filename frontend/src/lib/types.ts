@@ -22,6 +22,13 @@ export interface Category {
   createdAt: string;
 }
 
+export interface Subtask {
+  id: number;
+  title: string;
+  done: boolean;
+  position: number;
+}
+
 export interface Task {
   id: number;
   title: string;
@@ -38,6 +45,8 @@ export interface Task {
   nextOccurrenceId: number | null;
   /** Minutes before dueAt to remind (0 = at the due time), or null for none. */
   remindBeforeMinutes: number | null;
+  /** The checklist, in order. */
+  subtasks: Subtask[];
   createdAt: string;
   updatedAt: string;
 }

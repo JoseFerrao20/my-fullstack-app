@@ -1,11 +1,15 @@
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base, TimestampMixin
 from app.features.categories.models import Category
+
+if TYPE_CHECKING:
+    from app.features.subtasks.models import Subtask
 
 
 class TaskStatus(enum.StrEnum):
@@ -71,3 +75,7 @@ class Task(TimestampMixin, Base):
     remind_before_minutes: Mapped[int | None] = mapped_column(Integer)
 
     category: Mapped[Category | None] = relationship(lazy="joined")
+    # The checklist, always loaded with the task (one extra IN query per page of tasks).
+    subtasks: Mapped[list["Subtask"]] = relationship(
+        lazy="selectin", order_by="Subtask.position", cascade="all, delete-orphan", passive_deletes=True
+    )

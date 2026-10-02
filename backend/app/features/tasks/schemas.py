@@ -5,6 +5,7 @@ from pydantic import AwareDatetime, Field, field_validator
 
 from app.core.schemas import CamelModel
 from app.features.categories.schemas import CategoryOut
+from app.features.subtasks.schemas import SubtaskOut
 from app.features.tasks.models import TaskPriority, TaskRecurrence, TaskStatus
 from app.features.tasks.recurrence import is_valid_timezone
 
@@ -102,6 +103,7 @@ class TaskOut(CamelModel):
     recurrence_timezone: str | None
     next_occurrence_id: int | None
     remind_before_minutes: int | None
+    subtasks: list[SubtaskOut]
     created_at: datetime
     updated_at: datetime
 

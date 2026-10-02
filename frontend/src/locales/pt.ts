@@ -10,6 +10,7 @@ export const pt: Translation = {
     language: "Idioma",
   },
   errors: {
+    TOO_MANY_SUBTASKS: "Uma tarefa pode ter no máximo 50 passos",
     INVALID_RESET_TOKEN: "Este link de recuperação é inválido ou expirou.",
     INVALID_PASSWORD: "A password está incorreta",
     generic: "Algo correu mal",
@@ -142,6 +143,19 @@ export const pt: Translation = {
     digestHour: "Enviar às",
     save: "Guardar",
     saved: "Guardado",
+  },
+  subtasks: {
+    title: "Passos",
+    empty: "Ainda não há passos.",
+    addPlaceholder: "Adicionar um passo",
+    add: "Adicionar",
+    progress: "{{done}} de {{total}} passos concluídos",
+    show: "Mostrar passos",
+    hide: "Esconder passos",
+    rename: "Passo: {{title}}",
+    moveUp: "Mover «{{title}}» para cima",
+    moveDown: "Mover «{{title}}» para baixo",
+    delete: "Apagar o passo «{{title}}»",
   },
   task: {
     status: { todo: "Por fazer", in_progress: "Em curso", done: "Concluída" },

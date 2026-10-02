@@ -8,6 +8,7 @@ export const en = {
     language: "Language",
   },
   errors: {
+    TOO_MANY_SUBTASKS: "A task can have at most 50 steps",
     INVALID_RESET_TOKEN: "This reset link is invalid or has expired.",
     INVALID_PASSWORD: "The password is incorrect",
     generic: "Something went wrong",
@@ -140,6 +141,19 @@ export const en = {
     digestHour: "Send at",
     save: "Save",
     saved: "Saved",
+  },
+  subtasks: {
+    title: "Steps",
+    empty: "No steps yet.",
+    addPlaceholder: "Add a step",
+    add: "Add",
+    progress: "{{done}} of {{total}} steps done",
+    show: "Show steps",
+    hide: "Hide steps",
+    rename: "Step: {{title}}",
+    moveUp: "Move “{{title}}” up",
+    moveDown: "Move “{{title}}” down",
+    delete: "Delete step “{{title}}”",
   },
   task: {
     status: { todo: "To do", in_progress: "In progress", done: "Done" },
