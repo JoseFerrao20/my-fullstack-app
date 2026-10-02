@@ -1,10 +1,14 @@
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+
+if TYPE_CHECKING:
+    from app.features.tasks.models import Task
 
 
 class NotificationType(enum.StrEnum):
@@ -32,3 +36,9 @@ class Notification(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    task: Mapped["Task"] = relationship(lazy="joined")
+
+    @property
+    def task_title(self) -> str:
+        return self.task.title

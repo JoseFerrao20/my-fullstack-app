@@ -13,6 +13,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(100))
     hashed_password: Mapped[str] = mapped_column(String(255))
+    # UI and email language ("pt" | "en"); NULL means "follow the browser".
+    locale: Mapped[str | None] = mapped_column(String(5))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

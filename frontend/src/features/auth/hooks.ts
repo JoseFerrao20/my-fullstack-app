@@ -47,3 +47,11 @@ export function useLogout() {
     },
   });
 }
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.updateProfile,
+    onSuccess: (user) => queryClient.setQueryData(meKey, user),
+  });
+}

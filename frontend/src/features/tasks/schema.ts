@@ -1,20 +1,12 @@
+import type { TFunction } from "i18next";
 import { z } from "zod";
 import type { TaskInput } from "@/features/tasks/api";
 import { fromDateTimeLocal, toDateTimeLocal } from "@/lib/format";
 import type { Task, TaskPriority, TaskRecurrence, TaskStatus } from "@/lib/types";
 
-export const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: "To do",
-  in_progress: "In progress",
-  done: "Done",
-};
-
-export const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  urgent: "Urgent",
-};
+export const STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
+export const PRIORITIES: TaskPriority[] = ["low", "medium", "high", "urgent"];
+export const RECURRENCES: TaskRecurrence[] = ["daily", "weekly", "monthly"];
 
 export const PRIORITY_STYLES: Record<TaskPriority, string> = {
   low: "bg-slate-100 text-slate-700",
@@ -23,48 +15,36 @@ export const PRIORITY_STYLES: Record<TaskPriority, string> = {
   urgent: "bg-red-100 text-red-800",
 };
 
-export const RECURRENCE_LABELS: Record<TaskRecurrence, string> = {
-  daily: "Daily",
-  weekly: "Weekly",
-  monthly: "Monthly",
-};
-
-const RECURRENCE_UNITS: Record<TaskRecurrence, [string, string]> = {
-  daily: ["day", "days"],
-  weekly: ["week", "weeks"],
-  monthly: ["month", "months"],
-};
-
-export function recurrenceUnit(recurrence: TaskRecurrence, interval: number): string {
-  const [one, many] = RECURRENCE_UNITS[recurrence];
-  return interval === 1 ? one : many;
+/** "day" / "days" for the "Every N …" field. */
+export function recurrenceUnit(t: TFunction, recurrence: TaskRecurrence, interval: number): string {
+  return t(`task.recurrenceUnit.${recurrence}`, { count: interval });
 }
 
 /** "Weekly", or "Every 2 weeks". */
-export function recurrenceLabel(recurrence: TaskRecurrence, interval: number): string {
-  return interval === 1 ? RECURRENCE_LABELS[recurrence] : `Every ${interval} ${recurrenceUnit(recurrence, interval)}`;
+export function recurrenceLabel(t: TFunction, recurrence: TaskRecurrence, interval: number): string {
+  return t(`task.recurrence.${recurrence}`, { count: interval });
 }
 
 export function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
-/** Form values: everything is a string, as the inputs produce. */
+/** Form values: everything is a string, as the inputs produce. Messages are translation keys. */
 export const taskFormSchema = z
   .object({
-    title: z.string().trim().min(1, "Title is required").max(200, "Keep it under 200 characters"),
-    description: z.string().max(5000, "Keep it under 5000 characters"),
+    title: z.string().trim().min(1, "validation.titleRequired").max(200, "validation.titleMax"),
+    description: z.string().max(5000, "validation.descriptionMax"),
     status: z.enum(["todo", "in_progress", "done"]),
     priority: z.enum(["low", "medium", "high", "urgent"]),
-    dueAt: z.string().refine((v) => v === "" || !Number.isNaN(Date.parse(v)), "Enter a valid date"),
+    dueAt: z.string().refine((v) => v === "" || !Number.isNaN(Date.parse(v)), "validation.dateInvalid"),
     categoryId: z.string(),
     recurrence: z.enum(["", "daily", "weekly", "monthly"]),
     recurrenceInterval: z
       .string()
-      .refine((v) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 365, "Enter a number from 1 to 365"),
+      .refine((v) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 365, "validation.intervalRange"),
   })
   .refine((v) => v.recurrence === "" || v.dueAt !== "", {
-    message: "Repeating tasks need a due date",
+    message: "validation.repeatNeedsDueDate",
     path: ["dueAt"],
   });
 

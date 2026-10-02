@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/Toast";
 import { tasksApi, type TaskFilters, type TaskInput, type TaskUpdateMeta } from "@/features/tasks/api";
 import type { ApiResult } from "@/lib/apiClient";
@@ -27,13 +28,14 @@ function useInvalidateTasks() {
 
 /** Tells the user when completing a recurring task scheduled the next one. */
 export function useNextOccurrenceToast() {
+  const { t } = useTranslation();
   const toast = useToast();
   return useCallback(
     (result: ApiResult<Task, TaskUpdateMeta | null>) => {
       const next = result.meta?.nextOccurrence;
-      if (next) toast(`Next "${result.data.title}" scheduled for ${formatDueDate(next.dueAt)}`);
+      if (next) toast(t("task.nextScheduled", { title: result.data.title, date: formatDueDate(next.dueAt) }));
     },
-    [toast],
+    [toast, t],
   );
 }
 

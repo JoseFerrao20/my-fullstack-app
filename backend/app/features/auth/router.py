@@ -13,7 +13,7 @@ from app.core.security import (
     set_refresh_cookie,
 )
 from app.features.auth.repository import SessionRepository, UserRepository
-from app.features.auth.schemas import LoginIn, SignupIn, UserOut
+from app.features.auth.schemas import LoginIn, ProfileUpdate, SignupIn, UserOut
 from app.features.auth.service import AuthService, IssuedTokens
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -88,3 +88,9 @@ def refresh(response: Response, db: DbSession, refresh_token: RefreshCookie = No
 def me(user: CurrentUser):
     """Return the logged-in user."""
     return ok(UserOut.model_validate(user))
+
+
+@router.patch("/me", response_model=Envelope[UserOut])
+def update_me(payload: ProfileUpdate, user: CurrentUser, db: DbSession):
+    """Update the profile. `locale` may be null to follow the browser language again."""
+    return ok(UserOut.model_validate(_service(db).update_profile(user, payload)))

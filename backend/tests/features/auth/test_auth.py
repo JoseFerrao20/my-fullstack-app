@@ -69,3 +69,30 @@ def test_unknown_route_uses_error_envelope(client):
         "error": {"code": "NOT_FOUND", "message": "Not Found", "details": None},
         "meta": None,
     }
+
+
+def test_signup_stores_locale(client):
+    res = client.post(
+        "/api/auth/signup",
+        json={"email": "ana@example.com", "name": "Ana", "password": "password123", "locale": "pt"},
+    )
+    assert res.json()["data"]["locale"] == "pt"
+
+
+def test_locale_defaults_to_follow_browser(client):
+    assert signup(client).json()["data"]["locale"] is None
+
+
+def test_update_profile(auth_client):
+    res = auth_client.patch("/api/auth/me", json={"name": " Alicia ", "locale": "pt"})
+    assert res.status_code == 200
+    assert res.json()["data"]["name"] == "Alicia"
+    assert res.json()["data"]["locale"] == "pt"
+
+    # null switches back to following the browser; omitted fields are untouched.
+    res = auth_client.patch("/api/auth/me", json={"locale": None})
+    assert res.json()["data"] == {**res.json()["data"], "name": "Alicia", "locale": None}
+
+    assert auth_client.patch("/api/auth/me", json={"locale": "fr"}).status_code == 422
+    assert auth_client.patch("/api/auth/me", json={"name": "  "}).status_code == 422
+    assert auth_client.patch("/api/auth/me", json={"name": None}).status_code == 422

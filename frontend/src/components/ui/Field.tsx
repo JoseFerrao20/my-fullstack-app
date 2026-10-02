@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 const controlClass =
@@ -5,19 +6,22 @@ const controlClass =
 
 interface FieldProps {
   label: string;
+  /** A translation key (from zod schemas) or a ready-made message (e.g. from the server). */
   error?: string;
 }
 
 function FieldShell({ id, label, error, children }: FieldProps & { id: string; children: ReactNode }) {
+  const { t, i18n } = useTranslation();
+  const message = error && i18n.exists(error) ? t(error as "errors.generic") : error;
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="block text-sm font-medium text-slate-700">
         {label}
       </label>
       {children}
-      {error && (
+      {message && (
         <p id={`${id}-error`} className="text-xs text-red-600">
-          {error}
+          {message}
         </p>
       )}
     </div>

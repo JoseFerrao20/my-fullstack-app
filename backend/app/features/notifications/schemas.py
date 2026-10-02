@@ -14,7 +14,9 @@ class NotificationListQuery(CamelModel):
 class NotificationOut(CamelModel):
     id: int
     task_id: int
+    task_title: str
     type: NotificationType
+    # English fallback text; clients should build their own wording from type + taskTitle.
     message: str
     read_at: datetime | None
     created_at: datetime

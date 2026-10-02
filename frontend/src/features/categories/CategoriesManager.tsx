@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -7,15 +8,14 @@ import {
   useDeleteCategory,
   useUpdateCategory,
 } from "@/features/categories/hooks";
+import { useErrorMessage } from "@/lib/errors";
 import type { Category } from "@/lib/types";
 
 const DEFAULT_COLOR = "#6366f1";
 
-function errorMessage(err: unknown) {
-  return err instanceof Error ? err.message : "Something went wrong";
-}
-
 function CategoryRow({ category }: { category: Category }) {
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
   const [name, setName] = useState(category.name);
   const [color, setColor] = useState(category.color);
   const colorTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -32,7 +32,7 @@ function CategoryRow({ category }: { category: Category }) {
     <li className="flex items-center gap-2 py-2">
       <input
         type="color"
-        aria-label={`Color for ${category.name}`}
+        aria-label={t("categories.colorFor", { name: category.name })}
         value={color}
         onChange={(e) => {
           // The picker fires continuously while dragging; save once it settles.
@@ -44,7 +44,7 @@ function CategoryRow({ category }: { category: Category }) {
         className="h-8 w-8 cursor-pointer rounded border border-slate-300"
       />
       <input
-        aria-label={`Name for ${category.name}`}
+        aria-label={t("categories.nameFor", { name: category.name })}
         value={name}
         maxLength={50}
         onChange={(e) => setName(e.target.value)}
@@ -57,9 +57,9 @@ function CategoryRow({ category }: { category: Category }) {
       />
       <Button
         variant="ghost"
-        aria-label={`Delete ${category.name}`}
+        aria-label={t("categories.deleteName", { name: category.name })}
         onClick={() => {
-          if (confirm(`Delete "${category.name}"? Its tasks will become uncategorized.`)) {
+          if (confirm(t("categories.confirmDelete", { name: category.name }))) {
             remove.mutate(category.id, { onError: (e) => toast(errorMessage(e), "error") });
           }
         }}
@@ -71,6 +71,8 @@ function CategoryRow({ category }: { category: Category }) {
 }
 
 export function CategoriesManager() {
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
   const { data: categories = [], isPending } = useCategories();
   const create = useCreateCategory();
   const [name, setName] = useState("");
@@ -93,11 +95,11 @@ export function CategoriesManager() {
 
   return (
     <section className="rounded-lg bg-white p-4 shadow-sm">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Categories</h2>
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{t("categories.title")}</h2>
       {isPending ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-sm text-slate-500">{t("app.loading")}</p>
       ) : categories.length === 0 ? (
-        <p className="text-sm text-slate-500">No categories yet.</p>
+        <p className="text-sm text-slate-500">{t("categories.empty")}</p>
       ) : (
         <ul className="divide-y divide-slate-100">
           {categories.map((c) => (
@@ -108,21 +110,21 @@ export function CategoriesManager() {
       <form onSubmit={onSubmit} className="mt-3 flex items-center gap-2">
         <input
           type="color"
-          aria-label="New category color"
+          aria-label={t("categories.newColor")}
           value={color}
           onChange={(e) => setColor(e.target.value)}
           className="h-8 w-8 cursor-pointer rounded border border-slate-300"
         />
         <input
-          aria-label="New category name"
-          placeholder="New category"
+          aria-label={t("categories.newName")}
+          placeholder={t("categories.newPlaceholder")}
           value={name}
           maxLength={50}
           onChange={(e) => setName(e.target.value)}
           className="flex-1 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
         />
         <Button type="submit" variant="secondary" disabled={!name.trim() || create.isPending}>
-          Add
+          {t("categories.add")}
         </Button>
       </form>
       {create.error && <p className="mt-2 text-xs text-red-600">{errorMessage(create.error)}</p>}

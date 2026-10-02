@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input, Select, Textarea } from "@/components/ui/Field";
@@ -9,15 +10,16 @@ import { useCreateTask, useUpdateTask } from "@/features/tasks/hooks";
 import {
   emptyTaskForm,
   formToInput,
-  PRIORITY_LABELS,
-  RECURRENCE_LABELS,
+  PRIORITIES,
+  RECURRENCES,
   recurrenceUnit,
-  STATUS_LABELS,
+  STATUSES,
   taskFormSchema,
   taskToForm,
   type TaskFormValues,
 } from "@/features/tasks/schema";
 import { ApiError } from "@/lib/apiClient";
+import { useErrorMessage } from "@/lib/errors";
 import type { Task } from "@/lib/types";
 
 interface Props {
@@ -28,6 +30,8 @@ interface Props {
 }
 
 export function TaskFormDialog({ open, task, onClose }: Props) {
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
   const create = useCreateTask();
   const update = useUpdateTask();
   const mutation = task ? update : create;
@@ -73,41 +77,54 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
 
   const generalError =
     mutation.error && !(mutation.error instanceof ApiError && mutation.error.fieldErrors.length)
-      ? mutation.error.message
+      ? errorMessage(mutation.error)
       : null;
 
   return (
-    <Dialog open={open} title={task ? "Edit task" : "New task"} onClose={onClose}>
+    <Dialog open={open} title={task ? t("taskForm.editTitle") : t("taskForm.newTitle")} onClose={onClose}>
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {generalError && (
           <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
             {generalError}
           </p>
         )}
-        <Input label="Title" autoFocus error={errors.title?.message} {...register("title")} />
-        <Textarea label="Description" error={errors.description?.message} {...register("description")} />
+        <Input label={t("taskForm.title")} autoFocus error={errors.title?.message} {...register("title")} />
+        <Textarea
+          label={t("taskForm.description")}
+          error={errors.description?.message}
+          {...register("description")}
+        />
         <div className="grid grid-cols-2 gap-4">
-          <Select label="Status" {...register("status")}>
-            {Object.entries(STATUS_LABELS).map(([value, label]) => (
+          <Select label={t("taskForm.status")} {...register("status")}>
+            {STATUSES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t(`task.status.${value}`)}
               </option>
             ))}
           </Select>
-          <Select label="Priority" {...register("priority")}>
-            {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+          <Select label={t("taskForm.priority")} {...register("priority")}>
+            {PRIORITIES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t(`task.priority.${value}`)}
               </option>
             ))}
           </Select>
-          <Input label="Due date" type="datetime-local" error={errors.dueAt?.message} {...register("dueAt")} />
-          <CategorySelect label="Category" error={errors.categoryId?.message} {...register("categoryId")} />
-          <Select label="Repeat" {...register("recurrence")}>
-            <option value="">Never</option>
-            {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
+          <Input
+            label={t("taskForm.dueDate")}
+            type="datetime-local"
+            error={errors.dueAt?.message}
+            {...register("dueAt")}
+          />
+          <CategorySelect
+            label={t("taskForm.category")}
+            error={errors.categoryId?.message}
+            {...register("categoryId")}
+          />
+          <Select label={t("taskForm.repeat")} {...register("recurrence")}>
+            <option value="">{t("taskForm.never")}</option>
+            {RECURRENCES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t(`task.recurrenceOption.${value}`)}
               </option>
             ))}
           </Select>
@@ -115,7 +132,7 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
             <div className="flex items-end gap-2">
               <div className="w-24">
                 <Input
-                  label="Every"
+                  label={t("taskForm.every")}
                   type="number"
                   min={1}
                   max={365}
@@ -123,19 +140,17 @@ export function TaskFormDialog({ open, task, onClose }: Props) {
                   {...register("recurrenceInterval")}
                 />
               </div>
-              <span className="pb-2 text-sm text-slate-600">{recurrenceUnit(recurrence, interval)}</span>
+              <span className="pb-2 text-sm text-slate-600">{recurrenceUnit(t, recurrence, interval)}</span>
             </div>
           )}
         </div>
-        {recurrence && (
-          <p className="text-xs text-slate-500">When you complete this task, the next one is created automatically.</p>
-        )}
+        {recurrence && <p className="text-xs text-slate-500">{t("taskForm.repeatHint")}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t("taskForm.cancel")}
           </Button>
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "Saving…" : task ? "Save changes" : "Create task"}
+            {mutation.isPending ? t("taskForm.saving") : task ? t("taskForm.save") : t("taskForm.create")}
           </Button>
         </div>
       </form>

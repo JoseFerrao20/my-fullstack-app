@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/Toast";
 import { tasksApi, type TaskFilters } from "@/features/tasks/api";
 import { tasksKey, useNextOccurrenceToast } from "@/features/tasks/hooks";
 import type { ApiResult } from "@/lib/apiClient";
+import { useErrorMessage } from "@/lib/errors";
 import type { PageMeta, Task, TaskStatus } from "@/lib/types";
 
 type TaskPage = ApiResult<Task[], PageMeta>;
@@ -18,6 +20,8 @@ interface MoveInput {
  */
 export function useMoveTask() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
   const toast = useToast();
   const notifyNext = useNextOccurrenceToast();
 
@@ -71,7 +75,7 @@ export function useMoveTask() {
 
     onError: (err, _input, context) => {
       for (const [key, page] of context?.snapshot ?? []) queryClient.setQueryData(key, page);
-      toast(`Couldn't move the task: ${err.message}`, "error");
+      toast(t("board.moveFailed", { message: errorMessage(err) }), "error");
     },
 
     onSettled: () => {

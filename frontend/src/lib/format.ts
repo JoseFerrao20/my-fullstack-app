@@ -1,7 +1,8 @@
+import { intlLocale } from "@/lib/i18n";
 import type { Task } from "@/lib/types";
 
 export function formatDueDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleString(intlLocale(), {
     dateStyle: "medium",
     timeStyle: "short",
   });

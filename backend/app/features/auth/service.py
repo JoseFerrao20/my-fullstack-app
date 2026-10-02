@@ -15,7 +15,7 @@ from app.core.security import (
 )
 from app.features.auth.models import AuthSession, User
 from app.features.auth.repository import SessionRepository, UserRepository
-from app.features.auth.schemas import LoginIn, SignupIn
+from app.features.auth.schemas import LoginIn, ProfileUpdate, SignupIn
 
 LOGIN_WINDOW = timedelta(minutes=15)
 LOGIN_LIMIT_PER_EMAIL_AND_IP = 5
@@ -49,6 +49,7 @@ class AuthService:
             email=payload.email,
             name=payload.name,
             hashed_password=hash_password(payload.password),
+            locale=payload.locale,
         )
 
     def authenticate(self, payload: LoginIn, ip: str) -> User:
@@ -111,6 +112,9 @@ class AuthService:
             if claims:
                 self.sessions.revoke(claims.session_id, datetime.now(UTC))
                 return
+
+    def update_profile(self, user: User, payload: ProfileUpdate) -> User:
+        return self.users.update(user, **payload.model_dump(exclude_unset=True))
 
     def end_all_sessions(self, user_id: int) -> int:
         return self.sessions.revoke_all_for_user(user_id, datetime.now(UTC))

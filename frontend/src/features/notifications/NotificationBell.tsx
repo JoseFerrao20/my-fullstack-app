@@ -1,16 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMarkAllRead, useMarkRead, useNewNotificationToasts, useNotifications } from "@/features/notifications/hooks";
-
-function timeAgo(iso: string): string {
-  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
-}
+import { notificationText, timeAgo } from "@/features/notifications/text";
 
 export function NotificationBell() {
+  const { t } = useTranslation();
   const { data } = useNotifications();
   useNewNotificationToasts();
   const markRead = useMarkRead();
@@ -40,7 +34,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={unreadCount ? `Notifications (${unreadCount} unread)` : "Notifications"}
+        aria-label={unreadCount ? t("notifications.labelUnread", { count: unreadCount }) : t("notifications.label")}
         aria-expanded={open}
         className="relative rounded-full p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
@@ -64,18 +58,18 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-80 rounded-lg border border-slate-200 bg-white shadow-lg">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2">
-            <span className="text-sm font-semibold text-slate-900">Notifications</span>
+            <span className="text-sm font-semibold text-slate-900">{t("notifications.label")}</span>
             <button
               type="button"
               disabled={unreadCount === 0 || markAllRead.isPending}
               onClick={() => markAllRead.mutate()}
               className="text-xs font-medium text-indigo-600 hover:underline disabled:cursor-default disabled:text-slate-400 disabled:no-underline"
             >
-              Mark all read
+              {t("notifications.markAllRead")}
             </button>
           </div>
           {notifications.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-500">You're all caught up.</p>
+            <p className="px-4 py-6 text-center text-sm text-slate-500">{t("notifications.empty")}</p>
           ) : (
             <ul className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
               {notifications.map((n) => (
@@ -92,7 +86,7 @@ export function NotificationBell() {
                       }`}
                     />
                     <span className="flex-1">
-                      {n.message}
+                      {notificationText(t, n)}
                       <span className="block text-xs text-slate-400">{timeAgo(n.createdAt)}</span>
                     </span>
                   </button>

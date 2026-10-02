@@ -10,6 +10,8 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  /** "pt" | "en", or null to follow the browser. */
+  locale: "pt" | "en" | null;
   createdAt: string;
 }
 
@@ -41,6 +43,7 @@ export interface Task {
 export interface Notification {
   id: number;
   taskId: number;
+  taskTitle: string;
   type: NotificationType;
   message: string;
   readAt: string | null;

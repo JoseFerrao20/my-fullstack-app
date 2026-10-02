@@ -11,9 +11,9 @@ describe("NotificationBell", () => {
 
   beforeEach(() => {
     notifications = [
-      makeNotification({ id: 1, message: "Overdue: Write report" }),
-      makeNotification({ id: 2, type: "due_soon", message: "Due soon: Call Bob" }),
-      makeNotification({ id: 3, message: "Overdue: Old", readAt: "2026-01-01T00:00:00Z" }),
+      makeNotification({ id: 1, taskTitle: "Write report" }),
+      makeNotification({ id: 2, type: "due_soon", taskTitle: "Call Bob" }),
+      makeNotification({ id: 3, taskTitle: "Old", readAt: "2026-01-01T00:00:00Z" }),
     ];
     server.use(
       http.get(apiUrl("/notifications"), () =>
@@ -59,7 +59,7 @@ describe("NotificationBell", () => {
     await screen.findByTestId("unread-count");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
-    notifications = [makeNotification({ id: 9, message: "Overdue: New one" }), ...notifications];
+    notifications = [makeNotification({ id: 9, taskTitle: "New one" }), ...notifications];
     await queryClient.refetchQueries({ queryKey: notificationsKey });
 
     expect(await screen.findByRole("status")).toHaveTextContent("Overdue: New one");

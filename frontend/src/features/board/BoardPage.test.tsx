@@ -43,7 +43,7 @@ describe("BoardPage", () => {
     expect(await within(column("To do")).findByText("Write report")).toBeInTheDocument();
     expect(await within(column("In progress")).findByText("Review PR")).toBeInTheDocument();
     expect(await within(column("Done")).findByText("Ship v1")).toBeInTheDocument();
-    expect(within(column("To do")).getByLabelText("1 tasks")).toBeInTheDocument();
+    expect(within(column("To do")).getByLabelText("1 task")).toBeInTheDocument();
     expect(within(column("To do")).getByText("Work")).toBeInTheDocument();
   });
 

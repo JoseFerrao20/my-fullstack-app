@@ -36,6 +36,8 @@ export interface paths {
         /**
          * Login
          * @description Log in with email and password (sets auth cookies).
+         *
+         *     Repeated failures return 429 with a Retry-After header.
          */
         post: operations["login_api_auth_login_post"];
         delete?: never;
@@ -55,9 +57,29 @@ export interface paths {
         put?: never;
         /**
          * Logout
-         * @description Clear the auth cookies.
+         * @description End this session on the server and clear the auth cookies.
          */
         post: operations["logout_api_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout All
+         * @description End every session of the current user, on all devices.
+         */
+        post: operations["logout_all_api_auth_logout_all_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -75,7 +97,7 @@ export interface paths {
         put?: never;
         /**
          * Refresh
-         * @description Issue fresh auth cookies from a valid refresh cookie.
+         * @description Rotate the refresh cookie and issue a new access cookie.
          */
         post: operations["refresh_api_auth_refresh_post"];
         delete?: never;
@@ -101,7 +123,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Me
+         * @description Update the profile. `locale` may be null to follow the browser language again.
+         */
+        patch: operations["update_me_api_auth_me_patch"];
         trace?: never;
     };
     "/api/tasks": {
@@ -401,6 +427,8 @@ export interface components {
             id: number;
             /** Taskid */
             taskId: number;
+            /** Tasktitle */
+            taskTitle: string;
             type: components["schemas"]["NotificationType"];
             /** Message */
             message: string;
@@ -417,6 +445,13 @@ export interface components {
          * @enum {string}
          */
         NotificationType: "due_soon" | "overdue";
+        /** ProfileUpdate */
+        ProfileUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Locale */
+            locale?: ("pt" | "en") | null;
+        };
         /** SignupIn */
         SignupIn: {
             /**
@@ -428,6 +463,8 @@ export interface components {
             name: string;
             /** Password */
             password: string;
+            /** Locale */
+            locale?: ("pt" | "en") | null;
         };
         /** TaskCreate */
         TaskCreate: {
@@ -533,6 +570,8 @@ export interface components {
             email: string;
             /** Name */
             name: string;
+            /** Locale */
+            locale: ("pt" | "en") | null;
             /**
              * Createdat
              * Format: date-time
@@ -564,7 +603,9 @@ export interface operations {
     signup_api_auth_signup_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "user-agent"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -597,7 +638,9 @@ export interface operations {
     login_api_auth_login_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "user-agent"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -632,7 +675,10 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                access_token?: string | null;
+                refresh_token?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -643,6 +689,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_NoneType_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_all_api_auth_logout_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_NoneType_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -688,6 +774,41 @@ export interface operations {
             };
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_UserOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_me_api_auth_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

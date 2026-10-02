@@ -42,7 +42,8 @@ describe("CategoriesManager", () => {
     await screen.findByDisplayValue("Work");
     await user.type(screen.getByLabelText("New category name"), "work");
     await user.click(screen.getByRole("button", { name: "Add" }));
-    expect(await screen.findByText("A category named 'Work' already exists")).toBeInTheDocument();
+    // Known error codes are shown in the UI language rather than the server's English text.
+    expect(await screen.findByText("A category with this name already exists")).toBeInTheDocument();
   });
 
   it("deletes after confirmation", async () => {

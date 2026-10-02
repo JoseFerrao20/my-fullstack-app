@@ -4,6 +4,7 @@ export const user: User = {
   id: 1,
   email: "alice@example.com",
   name: "Alice",
+  locale: null,
   createdAt: "2026-01-01T00:00:00Z",
 };
 
@@ -39,6 +40,7 @@ export function makeNotification(overrides: Partial<Notification> = {}): Notific
   return {
     id: 1000,
     taskId: 100,
+    taskTitle: "Write report",
     type: "overdue",
     message: "Overdue: Write report",
     readAt: null,

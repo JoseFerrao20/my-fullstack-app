@@ -32,6 +32,7 @@ def test_job_creates_due_soon_and_overdue_once(auth_client, db):
     assert body["meta"]["unreadCount"] == 2
     by_type = {n["type"]: n["message"] for n in body["data"]}
     assert by_type == {"due_soon": "Due soon: Soon", "overdue": "Overdue: Late"}
+    assert {n["type"]: n["taskTitle"] for n in body["data"]} == {"due_soon": "Soon", "overdue": "Late"}
 
 
 def test_due_soon_task_later_becomes_overdue(auth_client, db):

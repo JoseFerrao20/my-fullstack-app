@@ -16,9 +16,16 @@ class UserRepository:
     def get_by_email(self, email: str) -> User | None:
         return self.db.scalar(select(User).where(User.email == email))
 
-    def create(self, *, email: str, name: str, hashed_password: str) -> User:
-        user = User(email=email, name=name, hashed_password=hashed_password)
+    def create(self, *, email: str, name: str, hashed_password: str, locale: str | None = None) -> User:
+        user = User(email=email, name=name, hashed_password=hashed_password, locale=locale)
         self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def update(self, user: User, **fields: object) -> User:
+        for key, value in fields.items():
+            setattr(user, key, value)
         self.db.commit()
         self.db.refresh(user)
         return user

@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import { TaskItem } from "@/features/tasks/TaskItem";
+import { formatDueDate } from "@/lib/format";
 import { makeTask } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 import { apiUrl, http, ok, server } from "@/test/server";
@@ -22,8 +23,7 @@ describe("TaskItem", () => {
 
     await user.click(screen.getByRole("checkbox", { name: 'Mark "Standup" as done' }));
 
-    const expected = new Date(nextDue).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-    expect(await screen.findByText(`Next "Standup" scheduled for ${expected}`)).toBeInTheDocument();
+    expect(await screen.findByText(`Next "Standup" scheduled for ${formatDueDate(nextDue)}`)).toBeInTheDocument();
   });
 
   it("stays quiet when completing a one-off task", async () => {
