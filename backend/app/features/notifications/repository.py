@@ -78,7 +78,9 @@ class NotificationRepository:
                 insert(Notification)
                 .from_select(["user_id", "task_id", "type", "message"], source)
                 .on_conflict_do_nothing(constraint="uq_notifications_task_id_type")
+                # rowcount is unreliable for INSERT ... SELECT; count what was actually inserted.
+                .returning(Notification.id)
             )
-            inserted += self.db.execute(stmt).rowcount or 0
+            inserted += len(self.db.execute(stmt).all())
         self.db.commit()
         return inserted

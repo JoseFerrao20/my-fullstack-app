@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
 
     database_url: str = "postgresql+psycopg://taskapp:taskapp@localhost:5432/taskapp"
-    jwt_secret: str = "dev-secret-change-me"
+    jwt_secret: str = "dev-only-insecure-secret-change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 7
