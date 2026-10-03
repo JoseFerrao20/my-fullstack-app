@@ -1,6 +1,7 @@
 # Guia de deploy
 
-Como pôr a app a correr num servidor próprio (VPS), com HTTPS, email a sério e backups.
+Como pôr a app a correr num servidor próprio (VPS), com HTTPS, email a sério e backups,
+sem custos: servidor Oracle Cloud "Always Free", email Brevo e backups Backblaze B2 (planos grátis).
 Tempo estimado na primeira vez: 30 a 45 minutos.
 
 O que fica a correr no servidor (tudo em Docker, ficheiro `docker-compose.prod.yml`):
@@ -17,53 +18,132 @@ O que fica a correr no servidor (tudo em Docker, ficheiro `docker-compose.prod.y
 
 ## 1. Criar o servidor
 
-Qualquer VPS com Ubuntu serve. Exemplo com a **Hetzner Cloud** (cerca de 4 €/mês):
+Qualquer servidor com Ubuntu 24.04 serve. Duas opções:
 
-1. Criar conta em <https://console.hetzner.cloud> e um projeto.
-2. **Add Server**:
-   - Localização: Nuremberga ou Helsínquia (ou outra na UE).
-   - Imagem: **Ubuntu 24.04**.
-   - Tipo: **CX22** (2 vCPU, 4 GB RAM). Com 2 GB também funciona, mas ver o passo 3 (swap).
-   - **SSH key**: colar a tua chave pública. No Windows, se ainda não tens uma:
-     ```powershell
-     ssh-keygen -t ed25519
-     Get-Content $HOME\.ssh\id_ed25519.pub
-     ```
-3. Anotar o **endereço IPv4** do servidor (por exemplo `203.0.113.7`).
+- **A. Oracle Cloud "Always Free"**: grátis, e a máquina (ARM, 4 CPUs, 24 GB) chega e sobra.
+  É a opção que usamos.
+- **B. Hetzner Cloud**: cerca de 4 €/mês, mais simples de criar. Fica como alternativa se
+  a Oracle não deixar criar a máquina.
 
-Entrar no servidor:
+Em qualquer dos casos precisas de uma chave SSH. No Windows, se ainda não tens uma:
+
+```powershell
+ssh-keygen -t ed25519
+Get-Content $HOME\.ssh\id_ed25519.pub   # a chave pública, para colar no painel
+```
+
+### 1A. Oracle Cloud "Always Free" (recomendado)
+
+**Criar a conta**
+
+1. Em <https://www.oracle.com/cloud/free/> → **Start for free**.
+2. Escolher a **Home Region** com cuidado: **não se pode mudar depois**, e a máquina grátis
+   só pode ser criada nela. Escolher uma na Europa (ex.: Frankfurt, Amsterdam, Madrid,
+   Marselha, Milão, Paris).
+3. É pedido um cartão de crédito só para verificar a identidade (pode aparecer uma
+   pré-autorização pequena que é anulada). Enquanto ficares nos recursos "Always Free",
+   não há cobranças.
+
+**Criar a máquina**
+
+1. Menu ☰ → **Compute → Instances → Create instance**. Nome: `taskapp`.
+2. **Image and shape**:
+   - **Image → Change image → Ubuntu → Canonical Ubuntu 24.04** (a versão normal, não a
+     "Minimal").
+   - **Shape → Change shape → Ampere → VM.Standard.A1.Flex**, com **2 OCPUs e 12 GB** de
+     memória. O limite grátis é 4 OCPUs e 24 GB no total; 2/12 deixa margem para outra
+     máquina e cria-se mais facilmente quando há pouca capacidade.
+   - Deve aparecer a etiqueta **Always Free-eligible**. Se não aparecer, não continues.
+3. **Networking**: deixar criar uma **nova VCN** com **subnet pública** e manter
+   **Assign a public IPv4 address** ativo.
+4. **Add SSH keys → Paste public keys**: colar a chave pública.
+5. **Boot volume**: o tamanho por omissão (cerca de 47 GB) chega; o limite grátis é 200 GB.
+6. **Create**. Ao fim de um minuto ou dois fica **Running**; anotar o **Public IP address**
+   (por exemplo `203.0.113.7`).
+
+> **"Out of capacity for shape VM.Standard.A1.Flex"**: a região não tem máquinas ARM livres
+> nesse momento. É comum. Tentar outro *availability domain* (AD-1/2/3, se a região tiver
+> vários), uma máquina mais pequena (1 OCPU / 6 GB também chega para esta app) ou repetir
+> mais tarde, a horas diferentes, durante alguns dias.
+
+**Abrir as portas 80 e 443 no painel**
+
+A Oracle tem uma firewall de rede própria, à frente da máquina:
+
+1. Na página da instância → **Primary VNIC → Subnet** (link) → **Security** (ou
+   **Security Lists**) → **Default Security List**.
+2. **Add Ingress Rules**, três regras, todas com **Source CIDR** `0.0.0.0/0`:
+
+   | IP Protocol | Destination Port Range |
+   |-------------|------------------------|
+   | TCP         | 80                     |
+   | TCP         | 443                    |
+   | UDP         | 443                    |
+
+   A porta 22 (SSH) já vem aberta.
+
+Além desta, há a firewall dentro do Ubuntu, que se trata no passo 2.
+
+**Para a máquina não ser recuperada**
+
+A Oracle pode recuperar máquinas "Always Free" que passem 7 dias quase paradas (CPU,
+rede e memória muito baixas). Uma app pessoal com pouco uso pode cair nisso. A forma
+segura de o evitar é passar a conta para **Pay As You Go** (menu ☰ → **Billing → Upgrade
+and Manage Payment**): os recursos "Always Free" continuam grátis e as máquinas deixam de
+ser recuperadas. Também costuma resolver o "Out of capacity".
+
+Se fizeres o upgrade, cria logo um **orçamento com alerta** (☰ → **Billing → Budgets →
+Create Budget**, ex.: 1 € com alerta a 100 %) para seres avisado se algo deixar de ser grátis.
+E mantém os backups fora do servidor (passo 9) em qualquer caso.
+
+**Entrar no servidor**
+
+Na Oracle o utilizador é `ubuntu` (não `root`):
 
 ```bash
-ssh root@203.0.113.7
+ssh ubuntu@203.0.113.7
+sudo -i        # passar a root para o passo 2
 ```
+
+### 1B. Hetzner Cloud (alternativa paga)
+
+1. Criar conta em <https://console.hetzner.cloud> e um projeto.
+2. **Add Server**: localização na UE (ex.: Nuremberga), imagem **Ubuntu 24.04**, tipo
+   **CX22** (2 vCPU, 4 GB RAM), e colar a chave SSH pública.
+3. Anotar o **endereço IPv4** e entrar:
+   ```bash
+   ssh root@203.0.113.7
+   ```
 
 ## 2. Preparar o sistema
 
 Tudo como `root`, no servidor.
 
+### Atualizações
+
 ```bash
-# Atualizações (e atualizações de segurança automáticas)
 apt update && apt upgrade -y
 apt install -y unattended-upgrades git
 dpkg-reconfigure -plow unattended-upgrades
-
-# Docker (script oficial)
-curl -fsSL https://get.docker.com | sh
-
-# Utilizador próprio para a app (o deploy automático também entra com ele)
-adduser --disabled-password --gecos "" deploy
-usermod -aG docker deploy
-mkdir -p /home/deploy/.ssh
-cp ~/.ssh/authorized_keys /home/deploy/.ssh/
-chown -R deploy:deploy /home/deploy/.ssh
 ```
-
-> Estar no grupo `docker` dá ao utilizador `deploy` poderes equivalentes a root.
-> É normal num servidor dedicado a esta app; apenas não o uses para mais nada.
 
 ### Firewall
 
-Só precisamos de SSH (22) e da web (80/443):
+Só precisamos de SSH (22) e da web (80/443). Fazer isto **antes** de instalar o Docker.
+
+**Na Oracle**, o Ubuntu já vem com regras `iptables` que bloqueiam tudo menos o SSH
+(não uses `ufw` aqui, que entra em conflito com elas). Abrir 80 e 443 antes da regra que
+rejeita o resto, e guardar:
+
+```bash
+iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+iptables -I INPUT 6 -m state --state NEW -p udp --dport 443 -j ACCEPT
+netfilter-persistent save
+iptables -L INPUT -n --line-numbers   # as três regras devem aparecer antes do REJECT
+```
+
+**Na Hetzner** (ou noutro fornecedor sem regras pré-instaladas), com `ufw`:
 
 ```bash
 ufw allow OpenSSH
@@ -73,21 +153,40 @@ ufw allow 443/udp
 ufw enable
 ```
 
-A base de dados e o backend não publicam portas, por isso não ficam acessíveis de fora
-mesmo com o Docker a contornar o `ufw` (que só se aplica a portas publicadas).
+A base de dados e o backend não publicam portas, por isso nunca ficam acessíveis de fora;
+só o Caddy (80/443) fica.
+
+### Docker e utilizador da app
+
+```bash
+# Docker (script oficial; também funciona em ARM)
+curl -fsSL https://get.docker.com | sh
+
+# Utilizador próprio para a app (o deploy automático também entra com ele)
+adduser --disabled-password --gecos "" deploy
+usermod -aG docker deploy
+mkdir -p /home/deploy/.ssh
+cp /home/ubuntu/.ssh/authorized_keys /home/deploy/.ssh/   # Oracle
+# cp /root/.ssh/authorized_keys /home/deploy/.ssh/        # Hetzner
+chown -R deploy:deploy /home/deploy/.ssh
+```
+
+> Estar no grupo `docker` dá ao utilizador `deploy` poderes equivalentes a root.
+> É normal num servidor dedicado a esta app; apenas não o uses para mais nada.
 
 ### Desligar o login por password no SSH
 
-Depois de confirmar que `ssh deploy@203.0.113.7` funciona com a chave:
+Depois de confirmar que `ssh deploy@203.0.113.7` funciona com a chave (na Oracle já vem
+desligado, mas não faz mal repetir):
 
 ```bash
 sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
 systemctl reload ssh
 ```
 
-### Só se o servidor tiver 2 GB de RAM: swap
+### Só se o servidor tiver 2 GB de RAM ou menos: swap
 
-O build do frontend pode precisar de mais memória:
+O build do frontend pode precisar de mais memória (na Oracle, com 6 GB ou mais, não é preciso):
 
 ```bash
 fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
@@ -350,9 +449,11 @@ O que muda para os utilizadores com a mudança de endereço:
 
 | Sintoma | Causa provável |
 |---|---|
-| O browser diz que o certificado é inválido | O `DOMAIN` não resolve para este servidor, ou as portas 80/443 estão fechadas. Ver `dc logs caddy`. |
+| O browser diz que o certificado é inválido, ou o site não abre | O `DOMAIN` não resolve para este servidor, ou as portas 80/443 estão fechadas (na Oracle: confirmar a Security List **e** as regras `iptables` do passo 2). Ver `dc logs caddy`. |
 | `dc ps` mostra o backend a reiniciar | `dc logs backend`: normalmente "Refusing to start in production" com a lista do que corrigir. |
 | `Set X in .env.production` ao correr `dc` | Falta essa variável no `.env.production`. |
 | Os emails não chegam | Remetente não verificado na Brevo ou SMTP key errada; ver `dc logs backend`. Ver também a pasta de spam. |
 | "Too many attempts" ao entrar | Proteção contra ataques: 5 falhas por email+IP em 15 min. Esperar. |
 | O build é morto a meio (`Killed`) | Falta de memória: ativar swap (passo 2). |
+| Oracle: "Out of capacity" ao criar a máquina | Sem máquinas ARM livres na região nesse momento; ver a nota no passo 1A. |
+| Oracle: a máquina desapareceu ou parou sozinha | Recuperada por inatividade; ver "Para a máquina não ser recuperada" no passo 1A e restaurar a partir do B2 (passo 9). |
